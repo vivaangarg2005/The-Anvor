@@ -16,8 +16,13 @@ app.use(cors({
   credentials: true, // Allow cookies to be sent across origins
 }));
 
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+
 // Mount Routes
 app.use('/api/health', healthRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
 
 // Catch-all for undefined routes (404)
 app.use((req, res, next) => {
