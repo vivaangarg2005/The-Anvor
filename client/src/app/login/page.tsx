@@ -23,16 +23,26 @@ export default function LoginPage() {
   const [otpChannel, setOtpChannel] = useState<'WHATSAPP' | 'SMS'>('WHATSAPP');
 
   const clearMessages = () => { setError(''); setSuccessMessage(''); };
+  const clearFormFields = () => {
+    setName('');
+    setPhone('');
+    setEmail('');
+    setPassword('');
+    setOtp('');
+    clearMessages();
+  };
 
   // ── Password Login ──
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
-    if (!phone || !password) { setError('Phone and password are required.'); return; }
+    if (!phone || !password) { setError('Phone number/email and password are required.'); return; }
     setLoading(true);
     try {
       const res = await loginWithPassword({ phone, password });
       if (res.success) {
+        setPhone('');
+        setPassword('');
         router.push('/account');
         router.refresh();
       } else {
@@ -124,14 +134,14 @@ export default function LoginPage() {
               <h2 className="text-2xl font-serif text-stone-900 mb-2 text-center">Welcome Back</h2>
               <p className="text-sm text-stone-500 mb-8 text-center">Sign in to your account</p>
 
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleLogin} className="space-y-5" autoComplete="off">
                 <div>
-                  <label htmlFor="login-phone" className="block text-xs font-bold text-stone-900 mb-2 uppercase tracking-widest">Phone Number</label>
-                  <input id="login-phone" type="tel" autoComplete="tel" placeholder="+91 98765 43210" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} />
+                  <label htmlFor="login-phone" className="block text-xs font-bold text-stone-900 mb-2 uppercase tracking-widest">Phone Number or Email</label>
+                  <input id="login-phone" type="text" autoComplete="off" placeholder="+91 98765 43210 or name@example.com" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label htmlFor="login-password" className="block text-xs font-bold text-stone-900 mb-2 uppercase tracking-widest">Password</label>
-                  <input id="login-password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className={inputClass} />
+                  <input id="login-password" type="password" autoComplete="off" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className={inputClass} />
                 </div>
                 {error && <p className="text-red-700 text-sm bg-red-50 border border-red-100 px-4 py-3">{error}</p>}
                 <button type="submit" disabled={loading} className={primaryBtn}>

@@ -34,8 +34,8 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
-    const result = await authService.loginWithPassword({ phone, password });
+    const { phone, email, identifier, password } = req.body;
+    const result = await authService.loginWithPassword({ phone, email, identifier, password });
 
     setTokenCookie(res, result.token);
 

@@ -84,10 +84,33 @@ const registerUser = async ({ name, phone, email, password }) => {
 /**
  * loginWithPassword
  */
-const loginWithPassword = async ({ phone, password }) => {
-  const normalizedPhone = normalizePhone(phone);
+const loginWithPassword = async ({ phone, email, identifier, password }) => {
+  const inputIdentifier = (identifier || phone || email || '').trim();
+  if (!inputIdentifier) {
+    const err = new Error('Phone number or email is required.');
+    err.statusCode = 400;
+    throw err;
+  }
 
-  const user = await User.findOne({ phone: normalizedPhone });
+  let user;
+  if (inputIdentifier.includes('@')) {
+    user = await User.findOne({ email: inputIdentifier.toLowerCase() });
+  } else {
+    let searchPhone = inputIdentifier;
+    try {
+      if (isValidPhone(normalizePhone(inputIdentifier))) {
+        searchPhone = normalizePhone(inputIdentifier);
+      }
+    } catch {
+      // ignore
+    }
+    user = await User.findOne({
+      $or: [
+        { phone: searchPhone },
+        { email: inputIdentifier.toLowerCase() }
+      ]
+    });
+  }
 
   if (!user || !user.passwordHash) {
     const err = new Error('Invalid credentials.');
