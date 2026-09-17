@@ -12,11 +12,11 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative w-full h-[70vh] min-h-[500px] flex flex-col justify-center items-center text-center px-6 overflow-hidden bg-[#FDFBF7]">
+      <section className="relative w-full h-[70vh] min-h-125 flex flex-col justify-center items-center text-center px-6 overflow-hidden bg-[#FDFBF7]">
         {/* Subtle decorative background - we could use an image here later */}
         <div className="absolute inset-0 bg-stone-100/50 z-0 flex flex-col items-center justify-center overflow-hidden">
            {/* Abstract warm gradient or image could go here, keeping it extremely subtle for now */}
-           <div className="w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-stone-200/40 via-[#FDFBF7] to-[#FDFBF7] rounded-full blur-3xl opacity-60"></div>
+           <div className="w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-stone-200/40 via-[#FDFBF7] to-[#FDFBF7] rounded-full blur-3xl opacity-60"></div>
         </div>
         
         <div className="relative z-10 max-w-2xl mx-auto space-y-8 mt-12">
@@ -54,7 +54,7 @@ export default async function Home() {
             {featuredProducts.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
-                  <div className="aspect-[4/5] bg-stone-100 relative overflow-hidden mb-5">
+                  <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-5">
                     {/* Image with subtle zoom on hover */}
                     <img 
                       src={product.images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'} 
@@ -62,7 +62,7 @@ export default async function Home() {
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   </div>
-                  <div className="flex flex-col flex-grow text-center">
+                  <div className="flex flex-col grow text-center">
                     <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">
                       {product.category?.name || 'Uncategorized'}
                     </p>

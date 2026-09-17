@@ -71,7 +71,7 @@ export default async function AccountPage() {
           {/* Coming Soon */}
           <div className="bg-white border border-stone-200 p-8 shadow-sm flex flex-col">
             <h2 className="text-xs font-bold text-stone-900 uppercase tracking-widest mb-6 pb-4 border-b border-stone-100">Boutique Services</h2>
-            <div className="space-y-6 flex-grow">
+            <div className="space-y-6 grow">
               <div className="flex items-center justify-between text-stone-400 cursor-not-allowed border-b border-stone-50 pb-4">
                 <span className="text-sm font-medium tracking-wide">Order History</span>
                 <span className="text-[10px] text-stone-400 uppercase tracking-widest">Soon</span>

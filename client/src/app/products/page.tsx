@@ -32,7 +32,7 @@ export default async function ProductsPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 flex flex-col md:flex-row gap-16">
       
       {/* Sidebar Navigation */}
-      <aside className="w-full md:w-56 flex-shrink-0">
+      <aside className="w-full md:w-56 shrink-0">
         <div className="sticky top-28">
           <h2 className="text-xs font-bold text-stone-900 mb-6 uppercase tracking-[0.2em] border-b border-stone-200 pb-4">Categories</h2>
           <nav className="space-y-4">
@@ -81,7 +81,7 @@ export default async function ProductsPage({
             {products.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
-                  <div className="aspect-[4/5] bg-stone-100 relative overflow-hidden mb-5">
+                  <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-5">
                     <img 
                       src={product.images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'} 
                       alt={product.name} 
@@ -93,7 +93,7 @@ export default async function ProductsPage({
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col flex-grow text-center">
+                  <div className="flex flex-col grow text-center">
                     <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">
                       {product.category?.name || 'Uncategorized'}
                     </p>

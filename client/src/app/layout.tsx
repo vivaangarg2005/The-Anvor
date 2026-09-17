@@ -33,11 +33,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-sans bg-[var(--background)] text-[var(--foreground)] min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground min-h-screen flex flex-col`}>
         <Header isLoggedIn={isLoggedIn} />
 
         {/* Main Content Area */}
-        <main className="flex-grow">
+        <main className="grow">
           {children}
         </main>
 

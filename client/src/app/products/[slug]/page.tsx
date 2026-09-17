@@ -33,7 +33,7 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         
         {/* Left: Image Gallery */}
         <div className="w-full lg:w-1/2">
-          <div className="aspect-[4/5] bg-stone-100 overflow-hidden relative">
+          <div className="aspect-4/5 bg-stone-100 overflow-hidden relative">
             <img 
               src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=No+Image'} 
               alt={product.name}
