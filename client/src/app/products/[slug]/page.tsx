@@ -28,12 +28,12 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
   const isOutOfStock = product.stockQuantity === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20">
-      <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-24">
+      <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
         
         {/* Left: Image Gallery */}
         <div className="w-full lg:w-1/2">
-          <div className="aspect-[4/5] bg-gray-100 rounded-2xl overflow-hidden border border-gray-200">
+          <div className="aspect-[4/5] bg-stone-100 overflow-hidden relative">
             <img 
               src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=No+Image'} 
               alt={product.name}
@@ -44,42 +44,40 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
         </div>
 
         {/* Right: Product Info */}
-        <div className="w-full lg:w-1/2 flex flex-col">
-          <nav className="text-sm font-medium text-gray-500 mb-6 flex gap-2 uppercase tracking-wide">
-            <a href="/" className="hover:text-indigo-600 transition-colors">Home</a>
-            <span>/</span>
-            <a href={`/products?category=${product.category?.slug}`} className="hover:text-indigo-600 transition-colors">{product.category?.name}</a>
+        <div className="w-full lg:w-1/2 flex flex-col justify-center">
+          <nav className="text-xs font-bold text-stone-500 mb-8 flex gap-3 uppercase tracking-widest">
+            <a href="/" className="hover:text-stone-900 transition-colors">Home</a>
+            <span className="text-stone-300">/</span>
+            <a href={`/products?category=${product.category?.slug}`} className="hover:text-stone-900 transition-colors">{product.category?.name}</a>
           </nav>
 
-          <h1 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tight mb-4">
+          <h1 className="text-4xl lg:text-5xl font-serif text-stone-900 leading-tight mb-6">
             {product.name}
           </h1>
           
-          <div className="flex items-center gap-4 mb-8">
-            <span className="text-3xl font-bold text-indigo-600">₹{product.price}</span>
+          <div className="flex items-center gap-4 mb-10 pb-10 border-b border-stone-200">
+            <span className="text-2xl font-medium text-stone-900">₹{product.price}</span>
             {product.compareAtPrice && (
-              <span className="text-xl text-gray-400 line-through font-medium">₹{product.compareAtPrice}</span>
+              <span className="text-lg text-stone-400 line-through">₹{product.compareAtPrice}</span>
             )}
-            {isOutOfStock ? (
-              <span className="ml-auto bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">Out of Stock</span>
-            ) : (
-              <span className="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">In Stock</span>
+            {isOutOfStock && (
+              <span className="ml-auto text-xs text-stone-900 uppercase tracking-widest font-bold">Sold Out</span>
             )}
           </div>
 
-          <p className="text-lg text-gray-600 leading-relaxed mb-10">
+          <p className="text-base text-stone-600 leading-relaxed mb-12">
             {product.description}
           </p>
 
           {/* Flexible Attributes (if any exist) */}
           {product.attributes && Object.keys(product.attributes).length > 0 && (
-            <div className="mb-10">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Details</h3>
-              <ul className="space-y-3">
+            <div className="mb-12">
+              <h3 className="text-xs font-bold text-stone-900 uppercase tracking-widest mb-6 border-b border-stone-200 pb-2">Product Details</h3>
+              <ul className="space-y-4">
                 {Object.entries(product.attributes).map(([key, value]) => (
-                  <li key={key} className="flex gap-4">
-                    <span className="w-1/3 text-gray-500 capitalize">{key}</span>
-                    <span className="w-2/3 text-gray-900 font-medium">{value as string}</span>
+                  <li key={key} className="flex gap-4 text-sm">
+                    <span className="w-1/3 text-stone-500 capitalize">{key}</span>
+                    <span className="w-2/3 text-stone-900">{value as string}</span>
                   </li>
                 ))}
               </ul>
@@ -87,22 +85,22 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
           )}
 
           {/* Action Area */}
-          <div className="mt-auto pt-8 border-t border-gray-100">
+          <div className="mt-auto">
             {/* Disabled UI elements for now as requested */}
-            <div className="flex gap-4 mb-4 opacity-50 cursor-not-allowed" title="Cart functionality coming soon">
-              <div className="w-32 border-2 border-gray-300 rounded-lg flex items-center justify-between px-4 h-14 bg-gray-50">
-                <span className="text-gray-400 font-bold">-</span>
-                <span className="font-bold text-gray-900">1</span>
-                <span className="text-gray-400 font-bold">+</span>
+            <div className="flex flex-col sm:flex-row gap-4 mb-4 opacity-50 cursor-not-allowed" title="Cart functionality coming soon">
+              <div className="w-full sm:w-32 border border-stone-300 flex items-center justify-between px-6 h-14 bg-white">
+                <span className="text-stone-400 hover:text-stone-900 transition-colors">-</span>
+                <span className="font-medium text-stone-900">1</span>
+                <span className="text-stone-400 hover:text-stone-900 transition-colors">+</span>
               </div>
               <button 
                 disabled 
-                className="flex-1 bg-gray-900 text-white font-bold rounded-lg h-14 uppercase tracking-wider"
+                className="flex-1 bg-stone-900 text-white text-sm font-semibold h-14 uppercase tracking-widest transition-colors"
               >
-                {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+                {isOutOfStock ? 'Sold Out' : 'Add to Bag'}
               </button>
             </div>
-            <p className="text-center text-sm text-gray-500 font-medium">
+            <p className="text-center text-xs text-stone-400 uppercase tracking-widest mt-6">
               Payment & Cart features are disabled in this version.
             </p>
           </div>

@@ -18,11 +18,13 @@ app.use(cors({
 
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Mount Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes);
 
 // Catch-all for undefined routes (404)
 app.use((req, res, next) => {

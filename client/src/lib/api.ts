@@ -49,3 +49,76 @@ export async function getCategories() {
   }
   return res.json();
 }
+
+// ──────────────────────────────────────────────
+// Auth API
+// ──────────────────────────────────────────────
+
+export async function registerUser(data: { name: string; phone: string; email?: string; password: string }) {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // Send/receive HttpOnly cookies
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function loginWithPassword(data: { phone: string; password: string }) {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function requestOtp(data: { phone: string; channel: 'WHATSAPP' | 'SMS' }) {
+  const res = await fetch(`${API_BASE_URL}/auth/otp/request`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function verifyOtp(data: { phone: string; otp: string }) {
+  const res = await fetch(`${API_BASE_URL}/auth/otp/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+/**
+ * getMe — used by Server Components to verify the current session.
+ * Accepts an optional cookie string to forward the browser's HttpOnly cookie
+ * from the incoming Next.js request to the Express API (server-to-server).
+ */
+export async function getMe(cookieHeader?: string) {
+  const headers: Record<string, string> = {};
+  if (cookieHeader) {
+    headers['Cookie'] = cookieHeader;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    cache: 'no-store',
+    credentials: 'include',
+    headers,
+  });
+
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function logout() {
+  const res = await fetch(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return res.json();
+}
