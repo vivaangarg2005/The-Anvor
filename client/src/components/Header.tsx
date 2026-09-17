@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
-export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
+function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,9 +26,9 @@ export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   const checkIsActive = (linkHref: string, isExact?: boolean) => {
     if (isExact) {
-      return pathname === linkHref && !searchParams.get('category');
+      return pathname === linkHref && !searchParams?.get('category');
     }
-    const category = searchParams.get('category');
+    const category = searchParams?.get('category');
     if (category && linkHref.includes(category)) return true;
     return false;
   };
@@ -138,5 +138,25 @@ export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       )}
     </header>
+  );
+}
+
+export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
+  return (
+    <Suspense fallback={
+      <header className="bg-[#FFFFFF] border-b border-stone-200 sticky top-0 z-50 h-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          <div className="flex-1"></div>
+          <Link href="/" className="flex flex-col items-center">
+            <span className="text-xl md:text-2xl font-black tracking-[0.2em] text-stone-900 font-serif uppercase">
+              THE ANVOR
+            </span>
+          </Link>
+          <div className="flex-1"></div>
+        </div>
+      </header>
+    }>
+      <HeaderContent isLoggedIn={isLoggedIn} />
+    </Suspense>
   );
 }
