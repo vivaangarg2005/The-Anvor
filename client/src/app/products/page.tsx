@@ -13,10 +13,11 @@ export const dynamic = 'force-dynamic';
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: { category?: string; page?: string };
+  searchParams: Promise<{ category?: string; page?: string }>;
 }) {
-  const currentCategory = searchParams.category;
-  const currentPage = parseInt(searchParams.page || '1', 10);
+  const resolvedParams = await searchParams;
+  const currentCategory = resolvedParams.category;
+  const currentPage = parseInt(resolvedParams.page || '1', 10);
 
   // Fetch products and categories concurrently for performance
   const [productsRes, categoriesRes] = await Promise.all([
