@@ -27,7 +27,6 @@ const categorySchema = new mongoose.Schema(
 );
 
 // Indexes
-// We index slug because we will look up categories by slug for frontend URLs.
-categorySchema.index({ slug: 1 });
+// (No need to manually index 'slug' here because unique: true already created it)
 
 module.exports = mongoose.model('Category', categorySchema);

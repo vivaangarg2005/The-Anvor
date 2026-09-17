@@ -67,10 +67,7 @@ const productSchema = new mongoose.Schema(
 );
 
 // Indexes
-// 1. Slug for rapid URL lookups
-productSchema.index({ slug: 1 });
-// 2. SKU for quick backend admin lookups
-productSchema.index({ sku: 1 });
+// (slug and sku are already indexed automatically because of unique: true)
 // 3. Category for quickly finding all products in a category
 productSchema.index({ category: 1 });
 // 4. isActive to efficiently filter out disabled products on the public store
