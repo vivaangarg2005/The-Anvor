@@ -1,14 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { registerUser, loginWithPassword, requestOtp, verifyOtp } from '../../lib/api';
+import { useCart } from '../../context/CartContext';
+import { Suspense } from 'react';
 
 type AuthView = 'login' | 'register' | 'otp-request' | 'otp-verify';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams?.get('redirect') || '/account';
+  const { mergeGuestCartIfAny, clearCart } = useCart();
   const [view, setView] = useState<AuthView>('login');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,9 +38,9 @@ export default function LoginPage() {
     try {
       const res = await loginWithPassword({ phone, password });
       if (res.success) {
-        setPhone('');
-        setPassword('');
-        router.push('/account');
+        clearCart();
+        await mergeGuestCartIfAny();
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setError(res.error || 'Login failed.');
@@ -54,7 +59,9 @@ export default function LoginPage() {
     try {
       const res = await registerUser({ name, phone, email: email || undefined, password });
       if (res.success) {
-        router.push('/account');
+        clearCart();
+        await mergeGuestCartIfAny();
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setError(res.error || 'Registration failed.');
@@ -90,7 +97,9 @@ export default function LoginPage() {
     try {
       const res = await verifyOtp({ phone, otp });
       if (res.success) {
-        router.push('/account');
+        clearCart();
+        await mergeGuestCartIfAny();
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setError(res.error || 'OTP verification failed.');
@@ -286,5 +295,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[85vh] bg-background"></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

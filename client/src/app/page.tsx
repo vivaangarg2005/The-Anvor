@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getProducts } from '../lib/api';
+import ProductCardCartControl from '../components/ProductCardCartControl';
 
 // Force dynamic rendering to ensure fresh data during development
 export const dynamic = 'force-dynamic';
@@ -77,23 +78,30 @@ export default async function Home() {
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   </div>
-                  <div className="flex flex-col text-left">
-                    <p className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">
-                      {product.category?.name || 'Uncategorized'}
-                    </p>
-                    <h3 className="text-base font-serif text-stone-900 mb-1.5 line-clamp-1">{product.name}</h3>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-stone-900">₹{product.price}</span>
-                      {product.compareAtPrice && (
-                        <span className="text-sm text-stone-400 line-through">₹{product.compareAtPrice}</span>
-                      )}
+                    <div className="flex flex-col text-left">
+                      <p className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">
+                        {product.category?.name || 'Uncategorized'}
+                      </p>
+                      <h3 className="text-base font-serif text-stone-900 mb-1.5 line-clamp-1">{product.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-stone-900">₹{product.price}</span>
+                        {product.compareAtPrice && (
+                          <span className="text-sm text-stone-400 line-through">₹{product.compareAtPrice}</span>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <ProductCardCartControl 
+                          productId={product._id} 
+                          stockQuantity={product.stockQuantity} 
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+                </Link>
+              ))}
+            </div>
+          )}
         
         {featuredProducts.length > 0 && (
           <div className="mt-12 md:hidden">

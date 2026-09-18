@@ -60,12 +60,14 @@ app.use((req, res, next) => {
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 
 // Mount Routes
 app.use('/api/health', healthRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Catch-all for undefined routes (404)
 app.use((req, res, next) => {

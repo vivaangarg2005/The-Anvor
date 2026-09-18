@@ -2,6 +2,7 @@ import { getProduct } from '../../../lib/api';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import AddToCartForm from '../../../components/AddToCartForm';
 
 // Dynamic SEO metadata generation
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -87,23 +88,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          {/* Action Area */}
-          <div className="mt-auto">
-            {/* Disabled UI elements */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-4 opacity-50 cursor-not-allowed" title="Cart functionality coming soon">
-              <div className="w-full sm:w-32 border border-stone-200 flex items-center justify-between px-6 h-[52px] bg-transparent">
-                <span className="text-stone-400">-</span>
-                <span className="text-sm font-medium text-stone-900">1</span>
-                <span className="text-stone-400">+</span>
-              </div>
-              <button 
-                disabled 
-                className="flex-1 bg-stone-900 text-white text-xs font-semibold h-[52px] uppercase tracking-widest transition-colors"
-              >
-                {isOutOfStock ? 'Sold Out' : 'Add to Bag'}
-              </button>
-            </div>
-          </div>
+          <AddToCartForm product={product} />
           
         </div>
       </div>

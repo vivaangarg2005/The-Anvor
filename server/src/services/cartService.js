@@ -75,8 +75,8 @@ const getCart = async (userId) => {
  * Add an item to the cart or increment its quantity.
  */
 const addItem = async (userId, productId, quantity) => {
-  const qty = parseInt(quantity, 10);
-  if (isNaN(qty) || qty <= 0) {
+  const qty = Number(quantity);
+  if (!Number.isInteger(qty) || qty <= 0) {
     const err = new Error('Quantity must be a positive integer.');
     err.statusCode = 400;
     throw err;
@@ -103,27 +103,36 @@ const addItem = async (userId, productId, quantity) => {
     throw err;
   }
 
-  // Ensure cart exists
-  let cart = await Cart.findOne({ user: userId });
-  if (!cart) {
-    cart = new Cart({ user: userId, items: [] });
+  // Ensure cart exists safely (first-cart creation race)
+  await Cart.updateOne(
+    { user: userId },
+    { $setOnInsert: { user: userId, items: [] } },
+    { upsert: true }
+  );
+
+  // Atomic operation: Push the item with quantity 0 ONLY if it does not already exist
+  await Cart.updateOne(
+    { user: userId, 'items.product': { $ne: productId } },
+    { $push: { items: { product: productId, quantity: 0 } } }
+  );
+
+  // Atomic operation: Increment the quantity safely
+  const incCart = await Cart.findOneAndUpdate(
+    { user: userId, 'items.product': productId },
+    { $inc: { 'items.$.quantity': qty } },
+    { new: true }
+  );
+
+  // Enforce the maximum cap of 10
+  if (incCart) {
+    const item = incCart.items.find(i => i.product.toString() === productId.toString());
+    if (item && item.quantity > 10) {
+      await Cart.updateOne(
+        { user: userId, 'items.product': productId },
+        { $set: { 'items.$.quantity': 10 } }
+      );
+    }
   }
-
-  const existingItemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-
-  if (existingItemIndex > -1) {
-    // Increment existing
-    const newQty = cart.items[existingItemIndex].quantity + qty;
-    cart.items[existingItemIndex].quantity = Math.min(10, newQty); // Cap at 10
-  } else {
-    // Add new
-    cart.items.push({
-      product: productId,
-      quantity: Math.min(10, qty),
-    });
-  }
-
-  await cart.save();
 
   // Return the fully populated and calculated cart
   return getCart(userId);
@@ -133,29 +142,23 @@ const addItem = async (userId, productId, quantity) => {
  * Update the exact quantity of an existing cart item.
  */
 const updateItemQuantity = async (userId, productId, quantity) => {
-  const qty = parseInt(quantity, 10);
-  if (isNaN(qty) || qty <= 0 || qty > 10) {
+  const qty = Number(quantity);
+  if (!Number.isInteger(qty) || qty <= 0 || qty > 10) {
     const err = new Error('Quantity must be between 1 and 10.');
     err.statusCode = 400;
     throw err;
   }
 
-  const cart = await Cart.findOne({ user: userId });
-  if (!cart) {
-    const err = new Error('Cart not found.');
-    err.statusCode = 404;
-    throw err;
-  }
+  const result = await Cart.updateOne(
+    { user: userId, 'items.product': productId },
+    { $set: { 'items.$.quantity': qty } }
+  );
 
-  const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
-  if (itemIndex === -1) {
+  if (result.matchedCount === 0) {
     const err = new Error('Product not found in cart.');
     err.statusCode = 404;
     throw err;
   }
-
-  cart.items[itemIndex].quantity = qty;
-  await cart.save();
 
   return getCart(userId);
 };
@@ -190,10 +193,34 @@ const clearCart = async (userId) => {
   return getCart(userId);
 };
 
+/**
+ * Merge an array of guest items into the authenticated user's cart.
+ */
+const mergeGuestCart = async (userId, items) => {
+  if (!items || !Array.isArray(items)) {
+    return getCart(userId);
+  }
+
+  // Iterate sequentially to avoid massive concurrent spikes if the guest cart is large
+  for (const item of items) {
+    if (item.productId && item.quantity > 0) {
+      try {
+        await addItem(userId, item.productId, item.quantity);
+      } catch (err) {
+        // Silently ignore individual failures (e.g. out of stock, max 10 exceeded)
+        // so the rest of the merge succeeds
+      }
+    }
+  }
+
+  return getCart(userId);
+};
+
 module.exports = {
   getCart,
   addItem,
   updateItemQuantity,
   removeItem,
   clearCart,
+  mergeGuestCart,
 };

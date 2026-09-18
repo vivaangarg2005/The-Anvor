@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getProducts, getCategories } from '../../lib/api';
+import ProductCardCartControl from '../../components/ProductCardCartControl';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -92,23 +93,30 @@ export default async function ProductsPage({
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col text-left">
-                    <p className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">
-                      {product.category?.name || 'Uncategorized'}
-                    </p>
-                    <h3 className="text-base font-serif text-stone-900 mb-1.5 line-clamp-1">{product.name}</h3>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-stone-900">₹{product.price}</span>
-                      {product.compareAtPrice && (
-                        <span className="text-sm text-stone-400 line-through">₹{product.compareAtPrice}</span>
-                      )}
+                    <div className="flex flex-col text-left">
+                      <p className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">
+                        {product.category?.name || 'Uncategorized'}
+                      </p>
+                      <h3 className="text-base font-serif text-stone-900 mb-1.5 line-clamp-1">{product.name}</h3>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-stone-900">₹{product.price}</span>
+                        {product.compareAtPrice && (
+                          <span className="text-sm text-stone-400 line-through">₹{product.compareAtPrice}</span>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <ProductCardCartControl 
+                          productId={product._id} 
+                          stockQuantity={product.stockQuantity} 
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+                </Link>
+              ))}
+            </div>
+          )}
 
         {/* Pagination Foundation */}
         {pagination && pagination.totalPages > 1 && (

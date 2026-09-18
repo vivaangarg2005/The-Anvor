@@ -3,6 +3,20 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
+import { useCart } from '../context/CartContext';
+
+function CartCountBadge() {
+  const { cart, isLoading } = useCart();
+  if (isLoading || !cart) return null;
+  
+  if (cart.itemCount === 0) return null;
+
+  return (
+    <span className="absolute -top-2 -right-2 bg-stone-900 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+      {cart.itemCount}
+    </span>
+  );
+}
 
 function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
@@ -94,17 +108,15 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
             {isLoggedIn ? "Account" : "Sign In"}
           </Link>
           
-          <button disabled className="text-stone-600 hover:text-stone-900 transition-colors cursor-not-allowed flex items-center gap-2 group">
-            <span className="hidden sm:inline text-sm">Bag</span>
+          <Link href="/cart" className="text-stone-600 hover:text-stone-900 transition-colors flex items-center gap-2 group cursor-pointer">
+            <span className="hidden sm:inline text-sm">Cart</span>
             <div className="relative flex items-center">
               <svg className="w-5 h-5 text-stone-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              <span className="absolute -top-2 -right-2 bg-stone-900 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                0
-              </span>
+              <CartCountBadge />
             </div>
-          </button>
+          </Link>
         </div>
       </div>
 

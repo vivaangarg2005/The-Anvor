@@ -122,3 +122,69 @@ export async function logout() {
   });
   return res.json();
 }
+
+// ──────────────────────────────────────────────
+// Cart API
+// ──────────────────────────────────────────────
+
+export async function getCart(cookieHeader?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+  const res = await fetch(`${API_BASE_URL}/cart`, {
+    cache: 'no-store',
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    if (res.status === 401) return null;
+    throw new Error(`Failed to fetch cart: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function addToCart(productId: string, quantity: number = 1) {
+  const res = await fetch(`${API_BASE_URL}/cart/items`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ productId, quantity }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to add to cart');
+  return data;
+}
+
+export async function updateCartItem(productId: string, quantity: number) {
+  const res = await fetch(`${API_BASE_URL}/cart/items/${productId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ quantity }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update cart');
+  return data;
+}
+
+export async function removeCartItem(productId: string) {
+  const res = await fetch(`${API_BASE_URL}/cart/items/${productId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to remove from cart');
+  return data;
+}
+
+export async function mergeGuestCart(items: { productId: string; quantity: number }[]) {
+  const res = await fetch(`${API_BASE_URL}/cart/merge`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ items }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to merge cart');
+  return data;
+}
