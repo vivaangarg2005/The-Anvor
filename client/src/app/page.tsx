@@ -11,30 +11,34 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative w-full h-[70vh] min-h-125 flex flex-col justify-center items-center text-center px-6 overflow-hidden bg-[#FDFBF7]">
-        {/* Subtle decorative background - we could use an image here later */}
-        <div className="absolute inset-0 bg-stone-100/50 z-0 flex flex-col items-center justify-center overflow-hidden">
-           {/* Abstract warm gradient or image could go here, keeping it extremely subtle for now */}
-           <div className="w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-stone-200/40 via-[#FDFBF7] to-[#FDFBF7] rounded-full blur-3xl opacity-60"></div>
-        </div>
-        
-        <div className="relative z-10 max-w-2xl mx-auto space-y-8 mt-12">
-          <p className="text-xs tracking-[0.3em] text-stone-500 uppercase font-medium">New Collection</p>
-          <h1 className="text-4xl md:text-6xl font-serif text-stone-900 leading-tight">
-            Premium Handbags &amp; Purses
+      {/* Editorial Hero Section */}
+      <section className="relative w-full min-h-[70vh] flex flex-col md:flex-row bg-[#FDFBF7]">
+        <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left px-8 md:px-16 lg:px-24 py-20 md:py-16">
+          <p className="text-xs tracking-[0.3em] text-stone-500 uppercase font-medium mb-6">The Anvor</p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-stone-900 leading-[1.1] mb-6">
+            Elevate Your Everyday
           </h1>
-          <p className="text-sm md:text-base text-stone-600 max-w-md mx-auto leading-relaxed">
-            Discover our curated collection of elegant, handcrafted bags designed for the modern lifestyle.
+          <p className="text-sm md:text-base text-stone-600 max-w-sm leading-relaxed mb-10">
+            Discover our curated collection of elegant accessories designed for the modern lifestyle.
           </p>
-          <div className="pt-6">
-            <Link 
-              href="/products" 
-              className="inline-block bg-stone-900 text-white text-sm font-semibold tracking-wide uppercase px-10 py-4 rounded-sm hover:bg-stone-800 transition-colors"
-            >
-              Shop the Collection
-            </Link>
-          </div>
+          <Link 
+            href="/products" 
+            className="inline-block bg-stone-900 text-white text-xs font-semibold tracking-[0.15em] uppercase px-10 py-4 hover:bg-stone-800 transition-colors"
+          >
+            Shop the Collection
+          </Link>
+        </div>
+        <div className="w-full md:w-1/2 relative h-[50vh] md:h-auto bg-stone-100">
+          {featuredProducts.length > 0 ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img 
+              src={featuredProducts[0].images?.[0] || 'https://via.placeholder.com/800x1000?text=Editorial'}
+              alt="Featured Collection"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-stone-200"></div>
+          )}
         </div>
       </section>
 
@@ -83,8 +87,8 @@ export default async function Home() {
         )}
         
         {featuredProducts.length > 0 && (
-          <div className="mt-20 text-center">
-             <Link href="/products" className="inline-block border-b border-stone-900 pb-1 text-sm font-medium tracking-wide text-stone-900 hover:text-amber-800 hover:border-amber-800 transition-colors uppercase">
+          <div className="mt-16 text-center border-t border-stone-100 pt-16">
+             <Link href="/products" className="inline-block border border-stone-900 px-8 py-3 text-xs font-semibold tracking-[0.15em] text-stone-900 hover:bg-stone-900 hover:text-white transition-colors uppercase">
                View all products
              </Link>
           </div>
@@ -96,7 +100,7 @@ export default async function Home() {
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-2xl md:text-3xl font-serif text-stone-900">The Anvor Promise</h2>
           <p className="text-stone-600 leading-relaxed max-w-2xl mx-auto">
-            We believe in creating timeless pieces that blend traditional craftsmanship with modern elegance. Every bag is a testament to our commitment to quality and refined style.
+            We believe in creating timeless pieces that blend classic silhouettes with modern elegance. Every accessory is designed to elevate your everyday style.
           </p>
         </div>
       </section>

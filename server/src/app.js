@@ -10,23 +10,47 @@ const app = express();
 app.use(express.json()); // Parse JSON payloads
 app.use(cookieParser()); // Parse cookies for future JWT authentication
 
-// CORS configuration for local development
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
+  : ['http://localhost:3000'];
+
+// CORS configuration
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests only from our Next.js frontend
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true, // Allow cookies to be sent across origins
 }));
 
 // Explicit CSRF / Origin Validation for state-changing methods
 app.use((req, res, next) => {
-  const allowedOrigin = 'http://localhost:3000';
   const methods = ['POST', 'PUT', 'PATCH', 'DELETE'];
   
   // Only validate state-changing methods
   if (methods.includes(req.method)) {
-    const origin = req.headers.origin || req.headers.referer;
-    // In strict CSRF prevention, missing origin/referer on state-changing methods is usually rejected
-    // or strictly compared to the allowed origin
-    if (!origin || !origin.startsWith(allowedOrigin)) {
+    // Mobile apps using Bearer tokens are not vulnerable to browser-based CSRF
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    // For browser clients using cookies, enforce strict Origin/Referer matching
+    let origin = req.headers.origin;
+    if (!origin && req.headers.referer) {
+      try {
+        const refererUrl = new URL(req.headers.referer);
+        origin = refererUrl.origin;
+      } catch (e) {
+        // invalid referer URL
+      }
+    }
+
+    if (!origin || !allowedOrigins.includes(origin)) {
       return res.status(403).json({ success: false, error: 'CSRF Origin Validation Failed' });
     }
   }
