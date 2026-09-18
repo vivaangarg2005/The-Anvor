@@ -45,7 +45,7 @@ export default async function ProductsPage({
             className={`text-xs tracking-widest uppercase transition-colors relative py-1 ${!currentCategory ? 'text-stone-900 font-semibold' : 'text-stone-500 hover:text-stone-900'}`}
           >
             All
-            {!currentCategory && <span className="absolute bottom-0 left-0 w-full h-[1px] bg-stone-900"></span>}
+            {!currentCategory && <span className="absolute bottom-0 left-0 w-full h-px bg-stone-900"></span>}
           </Link>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {categories.map((cat: any) => (
@@ -55,7 +55,7 @@ export default async function ProductsPage({
               className={`text-xs tracking-widest uppercase transition-colors relative py-1 ${currentCategory === cat.slug ? 'text-stone-900 font-semibold' : 'text-stone-500 hover:text-stone-900'}`}
             >
               {cat.name}
-              {currentCategory === cat.slug && <span className="absolute bottom-0 left-0 w-full h-[1px] bg-stone-900"></span>}
+              {currentCategory === cat.slug && <span className="absolute bottom-0 left-0 w-full h-px bg-stone-900"></span>}
             </Link>
           ))}
         </nav>

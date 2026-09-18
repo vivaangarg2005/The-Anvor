@@ -71,7 +71,7 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
   if (quantity > 0) {
     return (
       <div 
-        className="mt-4 flex items-center justify-between border border-stone-200 h-[40px] bg-white cursor-auto"
+        className="mt-4 flex items-center justify-between border border-stone-200 h-10 bg-white cursor-auto"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
       >
         <button
@@ -101,7 +101,7 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
         type="button"
         onClick={handleAddToCart}
         disabled={isLoading || isOutOfStock}
-        className="mt-4 w-full bg-transparent border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white text-[10px] font-bold tracking-widest uppercase h-[40px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        className="mt-4 w-full bg-transparent border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white text-[10px] font-bold tracking-widest uppercase h-10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {isOutOfStock ? 'Sold Out' : (localLoading ? 'Adding...' : 'Add to Cart')}
       </button>

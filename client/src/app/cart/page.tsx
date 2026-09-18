@@ -55,7 +55,7 @@ export default function CartPage() {
                 
                 {/* Product Info */}
                 <div className="md:col-span-6 flex gap-6">
-                  <div className="w-24 h-32 bg-stone-100 flex-shrink-0 overflow-hidden">
+                  <div className="w-24 h-32 bg-stone-100 shrink-0 overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={item.product.image || 'https://via.placeholder.com/200x300?text=No+Image'} 
@@ -137,14 +137,14 @@ export default function CartPage() {
             {isGuest ? (
               <button 
                 onClick={() => router.push('/login?redirect=/cart')}
-                className="w-full bg-stone-900 text-white text-[10px] font-bold h-[52px] uppercase tracking-widest transition-colors hover:bg-stone-800 cursor-pointer mb-4"
+                className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors hover:bg-stone-800 cursor-pointer mb-4"
               >
                 Proceed to Checkout
               </button>
             ) : (
               <button 
                 disabled 
-                className="w-full bg-stone-900 text-white text-[10px] font-bold h-[52px] uppercase tracking-widest transition-colors opacity-50 cursor-not-allowed mb-4"
+                className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors opacity-50 cursor-not-allowed mb-4"
                 title="Checkout functionality coming soon"
               >
                 Proceed to Checkout

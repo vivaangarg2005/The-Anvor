@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col bg-background">
       {/* Editorial Hero Section */}
-      <section className="w-full flex flex-col md:flex-row h-auto md:h-[calc(100vh-5rem)] min-h-[450px] md:max-h-[700px] border-b border-stone-200 overflow-hidden">
+      <section className="w-full flex flex-col md:flex-row h-auto md:h-[calc(100vh-5rem)] min-h-112.5 md:max-h-175 border-b border-stone-200 overflow-hidden">
         
         {/* Text Area */}
         <div className="w-full md:w-1/2 flex flex-col justify-center items-start px-8 md:px-12 lg:px-20 py-12 md:py-0">
@@ -56,7 +56,7 @@ export default async function Home() {
       <section className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-24">
         <div className="flex flex-col items-center justify-center mb-16">
           <h2 className="text-3xl md:text-4xl font-serif text-stone-900 tracking-tight text-center">Featured Arrivals</h2>
-          <div className="w-12 h-[1px] bg-stone-300 mt-6"></div>
+          <div className="w-12 h-px bg-stone-300 mt-6"></div>
         </div>
 
         {featuredProducts.length === 0 ? (

@@ -75,7 +75,7 @@ export default function AddToCartForm({ product }: AddToCartFormProps) {
         </div>
       )}
       {quantity > 0 ? (
-        <div className="w-full sm:w-48 border border-stone-200 flex items-center justify-between px-6 h-[52px] bg-transparent mb-4">
+        <div className="w-full sm:w-48 border border-stone-200 flex items-center justify-between px-6 h-13 bg-transparent mb-4">
           <button 
             type="button"
             onClick={handleDecrease}
@@ -99,7 +99,7 @@ export default function AddToCartForm({ product }: AddToCartFormProps) {
           type="button"
           onClick={handleAdd}
           disabled={isOutOfStock || isLoading}
-          className="w-full sm:w-48 bg-stone-900 text-white text-xs font-semibold h-[52px] uppercase tracking-widest transition-colors hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed mb-4 cursor-pointer"
+          className="w-full sm:w-48 bg-stone-900 text-white text-xs font-semibold h-13 uppercase tracking-widest transition-colors hover:bg-stone-800 disabled:opacity-50 disabled:cursor-not-allowed mb-4 cursor-pointer"
         >
           {isOutOfStock ? 'Sold Out' : (isLoading ? 'Adding...' : 'Add to Cart')}
         </button>
