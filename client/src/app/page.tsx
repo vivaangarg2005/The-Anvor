@@ -51,11 +51,13 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {featuredProducts.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
                   <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-5">
                     {/* Image with subtle zoom on hover */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={product.images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'} 
                       alt={product.name} 

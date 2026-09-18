@@ -23,14 +23,6 @@ export default function LoginPage() {
   const [otpChannel, setOtpChannel] = useState<'WHATSAPP' | 'SMS'>('WHATSAPP');
 
   const clearMessages = () => { setError(''); setSuccessMessage(''); };
-  const clearFormFields = () => {
-    setName('');
-    setPhone('');
-    setEmail('');
-    setPassword('');
-    setOtp('');
-    clearMessages();
-  };
 
   // ── Password Login ──
   const handleLogin = async (e: React.FormEvent) => {
@@ -167,7 +159,7 @@ export default function LoginPage() {
               </div>
 
               <p className="text-center text-sm text-stone-500 mt-8">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <button onClick={() => { clearMessages(); setView('register'); }} className="text-stone-900 border-b border-stone-900 font-medium hover:text-amber-800 hover:border-amber-800 transition-colors">
                   Create Account
                 </button>
@@ -218,7 +210,7 @@ export default function LoginPage() {
             <>
               <h2 className="text-2xl font-serif text-stone-900 mb-2 text-center">Sign in with OTP</h2>
               <p className="text-sm text-stone-500 mb-8 text-center">
-                We'll send a 6-digit code via <strong className="text-stone-900">{otpChannel === 'WHATSAPP' ? 'WhatsApp' : 'SMS'}</strong>
+                We&apos;ll send a 6-digit code via <strong className="text-stone-900">{otpChannel === 'WHATSAPP' ? 'WhatsApp' : 'SMS'}</strong>
               </p>
 
               <div className="space-y-5">

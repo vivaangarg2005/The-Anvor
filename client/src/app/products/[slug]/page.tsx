@@ -1,6 +1,7 @@
 import { getProduct } from '../../../lib/api';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 // Dynamic SEO metadata generation
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -36,6 +37,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {/* Left: Image Gallery */}
         <div className="w-full lg:w-1/2">
           <div className="aspect-4/5 bg-stone-100 overflow-hidden relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=No+Image'} 
               alt={product.name}
@@ -48,9 +50,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {/* Right: Product Info */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center">
           <nav className="text-xs font-bold text-stone-500 mb-8 flex gap-3 uppercase tracking-widest">
-            <a href="/" className="hover:text-stone-900 transition-colors">Home</a>
+            <Link href="/" className="hover:text-stone-900 transition-colors">Home</Link>
             <span className="text-stone-300">/</span>
-            <a href={`/products?category=${product.category?.slug}`} className="hover:text-stone-900 transition-colors">{product.category?.name}</a>
+            <Link href={`/products?category=${product.category?.slug}`} className="hover:text-stone-900 transition-colors">{product.category?.name}</Link>
           </nav>
 
           <h1 className="text-4xl lg:text-5xl font-serif text-stone-900 leading-tight mb-6">

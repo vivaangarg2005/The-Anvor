@@ -16,6 +16,23 @@ app.use(cors({
   credentials: true, // Allow cookies to be sent across origins
 }));
 
+// Explicit CSRF / Origin Validation for state-changing methods
+app.use((req, res, next) => {
+  const allowedOrigin = 'http://localhost:3000';
+  const methods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  
+  // Only validate state-changing methods
+  if (methods.includes(req.method)) {
+    const origin = req.headers.origin || req.headers.referer;
+    // In strict CSRF prevention, missing origin/referer on state-changing methods is usually rejected
+    // or strictly compared to the allowed origin
+    if (!origin || !origin.startsWith(allowedOrigin)) {
+      return res.status(403).json({ success: false, error: 'CSRF Origin Validation Failed' });
+    }
+  }
+  next();
+});
+
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');

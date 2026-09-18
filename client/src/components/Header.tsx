@@ -11,6 +11,7 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   // Close mobile menu on route change
   useEffect(() => {
+    // eslint-disable-next-line
     setIsMobileMenuOpen(false);
   }, [pathname, searchParams]);
 

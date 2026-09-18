@@ -43,6 +43,7 @@ export default async function ProductsPage({
             >
               All Products
             </Link>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {categories.map((cat: any) => (
               <Link
                 key={cat._id}
@@ -72,17 +73,19 @@ export default async function ProductsPage({
         {products.length === 0 ? (
           <div className="text-center py-32 bg-white border border-stone-100">
             <h3 className="text-lg font-serif text-stone-900 mb-2">No products found</h3>
-            <p className="text-sm text-stone-500">We couldn't find any products in this category.</p>
+            <p className="text-sm text-stone-500">We couldn&apos;t find any products in this category.</p>
             <Link href="/products" className="mt-8 inline-block border-b border-stone-900 pb-1 text-sm font-medium tracking-wide text-stone-900 hover:text-amber-800 hover:border-amber-800 transition-colors uppercase">
               Clear filters
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {products.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
                   <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={product.images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'} 
                       alt={product.name} 
