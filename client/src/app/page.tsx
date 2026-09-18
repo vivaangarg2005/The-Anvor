@@ -6,47 +6,56 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   // Fetch a small limit of products for the featured section
-  const productsData = await getProducts({ limit: 3 });
+  const productsData = await getProducts({ limit: 4 }); // fetch 4 instead of 3 for a 2x2 grid or better horizontal scrolling
   const featuredProducts = productsData.data || [];
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-background">
       {/* Editorial Hero Section */}
-      <section className="relative w-full min-h-[70vh] flex flex-col md:flex-row bg-[#FDFBF7]">
-        <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left px-8 md:px-16 lg:px-24 py-20 md:py-16">
-          <p className="text-xs tracking-[0.3em] text-stone-500 uppercase font-medium mb-6">The Anvor</p>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-stone-900 leading-[1.1] mb-6">
-            Elevate Your Everyday
+      <section className="w-full flex flex-col md:flex-row h-auto md:h-[calc(100vh-5rem)] min-h-[450px] md:max-h-[700px] border-b border-stone-200 overflow-hidden">
+        
+        {/* Text Area */}
+        <div className="w-full md:w-1/2 flex flex-col justify-center items-start px-8 md:px-12 lg:px-20 py-12 md:py-0">
+          <p className="text-[9px] md:text-[10px] tracking-[0.2em] font-bold mb-4 md:mb-6">
+            <span className="text-stone-400">THE</span> <span className="text-stone-500">ANVOR</span>
+          </p>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif text-stone-900 leading-[1.05] mb-5 md:mb-6 tracking-tight">
+            Elevate Your<br className="hidden md:block" /> Everyday
           </h1>
-          <p className="text-sm md:text-base text-stone-600 max-w-sm leading-relaxed mb-10">
+          <p className="text-xs md:text-sm text-stone-600 max-w-[320px] leading-relaxed mb-6 md:mb-8">
             Discover our curated collection of elegant accessories designed for the modern lifestyle.
           </p>
           <Link 
             href="/products" 
-            className="inline-block bg-stone-900 text-white text-xs font-semibold tracking-[0.15em] uppercase px-10 py-4 hover:bg-stone-800 transition-colors"
+            className="inline-flex items-center gap-3 md:gap-4 bg-[#1C1C1C] text-white text-[9px] md:text-[10px] font-bold tracking-widest uppercase px-6 md:px-8 py-3.5 md:py-4 hover:bg-black transition-colors"
           >
-            Shop the Collection
+            EXPLORE THE COLLECTION
+            <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
           </Link>
         </div>
-        <div className="w-full md:w-1/2 relative h-[50vh] md:h-auto bg-stone-100">
+
+        {/* Product Image Area */}
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full relative bg-background flex items-center justify-center">
           {featuredProducts.length > 0 ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img 
-              src={featuredProducts[0].images?.[0] || 'https://via.placeholder.com/800x1000?text=Editorial'}
+              src={featuredProducts[0].images?.[0] || 'https://via.placeholder.com/1000x1200?text=Editorial'}
               alt="Featured Collection"
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              className="w-[85%] h-[85%] object-cover object-center shadow-sm"
             />
           ) : (
-            <div className="absolute inset-0 bg-stone-200"></div>
+            <div className="w-[85%] h-[85%] bg-stone-200"></div>
           )}
         </div>
       </section>
 
       {/* Featured Products Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 w-full">
-        <div className="flex flex-col items-center mb-16 text-center space-y-4">
-          <h2 className="text-3xl font-serif text-stone-900">Featured Arrivals</h2>
-          <div className="h-px w-12 bg-amber-700/40"></div>
+      <section className="w-full max-w-7xl mx-auto px-6 lg:px-8 py-24">
+        <div className="flex flex-col items-center justify-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-serif text-stone-900 tracking-tight text-center">Featured Arrivals</h2>
+          <div className="w-12 h-[1px] bg-stone-300 mt-6"></div>
         </div>
 
         {featuredProducts.length === 0 ? (
@@ -54,12 +63,12 @@ export default async function Home() {
             <p className="text-sm text-stone-500 uppercase tracking-widest">No products available</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {featuredProducts.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
-                  <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-5">
+                  <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-4">
                     {/* Image with subtle zoom on hover */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
@@ -68,13 +77,13 @@ export default async function Home() {
                       className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out" 
                     />
                   </div>
-                  <div className="flex flex-col grow text-center">
-                    <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">
+                  <div className="flex flex-col text-left">
+                    <p className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">
                       {product.category?.name || 'Uncategorized'}
                     </p>
-                    <h3 className="text-lg font-serif text-stone-900 mb-2 line-clamp-1 group-hover:text-amber-800 transition-colors">{product.name}</h3>
-                    <div className="mt-auto flex items-center justify-center gap-3">
-                      <span className="text-sm font-semibold text-stone-900">₹{product.price}</span>
+                    <h3 className="text-base font-serif text-stone-900 mb-1.5 line-clamp-1">{product.name}</h3>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-stone-900">₹{product.price}</span>
                       {product.compareAtPrice && (
                         <span className="text-sm text-stone-400 line-through">₹{product.compareAtPrice}</span>
                       )}
@@ -87,8 +96,11 @@ export default async function Home() {
         )}
         
         {featuredProducts.length > 0 && (
-          <div className="mt-16 text-center border-t border-stone-100 pt-16">
-             <Link href="/products" className="inline-block border border-stone-900 px-8 py-3 text-xs font-semibold tracking-[0.15em] text-stone-900 hover:bg-stone-900 hover:text-white transition-colors uppercase">
+          <div className="mt-12 md:hidden">
+             <Link 
+               href="/products" 
+               className="block w-full text-center border border-stone-900 px-8 py-4 text-xs font-semibold tracking-widest text-stone-900 hover:bg-stone-900 hover:text-white transition-colors uppercase"
+             >
                View all products
              </Link>
           </div>
@@ -96,10 +108,11 @@ export default async function Home() {
       </section>
 
       {/* Brand Value Section */}
-      <section className="bg-white border-t border-b border-stone-200 py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <h2 className="text-2xl md:text-3xl font-serif text-stone-900">The Anvor Promise</h2>
-          <p className="text-stone-600 leading-relaxed max-w-2xl mx-auto">
+      <section className="bg-[#FFFFFF] border-t border-stone-200 py-24 px-6">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <p className="text-xs tracking-widest text-stone-500 uppercase font-medium">The Anvor Promise</p>
+          <h2 className="text-3xl md:text-4xl font-serif text-stone-900 tracking-tight">Designed for everyday elegance</h2>
+          <p className="text-stone-600 leading-relaxed text-sm md:text-base mx-auto max-w-xl">
             We believe in creating timeless pieces that blend classic silhouettes with modern elegance. Every accessory is designed to elevate your everyday style.
           </p>
         </div>

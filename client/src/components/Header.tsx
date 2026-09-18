@@ -35,14 +35,14 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   return (
-    <header className="bg-[#FFFFFF] border-b border-stone-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+    <header className="bg-background sticky top-0 z-50">
+      <div className="w-full px-8 md:px-16 h-20 flex items-center justify-between">
         
-        {/* Mobile Menu Toggle */}
+        {/* Mobile Left: Menu Toggle */}
         <div className="flex items-center md:hidden flex-1">
           <button 
             onClick={toggleMobileMenu}
-            className="p-2 -ml-2 text-stone-600 hover:text-stone-900 focus:outline-none"
+            className="p-2 -ml-2 text-stone-900 focus:outline-none"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
           </button>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Left: Navigation */}
         <nav className="hidden md:flex gap-8 flex-1">
           {navLinks.map((link) => {
             const isActive = checkIsActive(link.href, link.isExact);
@@ -63,81 +63,76 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`text-sm font-medium tracking-wide transition-colors ${
-                  isActive
-                    ? 'text-stone-900 border-b-2 border-stone-900 pb-1'
-                    : 'text-stone-500 hover:text-stone-900 pb-1 border-b-2 border-transparent'
+                className={`text-sm transition-colors relative py-1 ${
+                  isActive ? 'text-stone-900 font-medium' : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 {link.name}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 w-full h-[1px] bg-stone-900"></span>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Brand */}
-        <Link href="/" className="flex flex-col items-center hover:opacity-80 transition-opacity">
-          <span className="text-xl md:text-2xl font-black tracking-[0.2em] text-stone-900 font-serif uppercase">
-            THE ANVOR
-          </span>
-        </Link>
+        {/* Center: Brand */}
+        <div className="flex-1 md:flex-none flex justify-center">
+          <Link href="/" className="flex flex-col items-center group">
+            <span className="text-xl md:text-2xl font-serif tracking-[0.2em] font-bold text-stone-900 uppercase group-hover:opacity-80 transition-opacity">
+              THE ANVOR
+            </span>
+          </Link>
+        </div>
 
-        {/* Utility Navigation */}
-        <div className="flex gap-4 items-center justify-end flex-1">
-          {isLoggedIn ? (
-            <Link
-              href="/account"
-              className={`text-sm font-medium tracking-wide transition-colors hidden sm:block ${
-                pathname === '/account' ? 'text-stone-900 border-b-2 border-stone-900 pb-1' : 'text-stone-500 hover:text-stone-900 pb-1 border-b-2 border-transparent'
-              }`}
-            >
-              Account
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className={`text-sm font-medium tracking-wide transition-colors hidden sm:block ${
-                pathname === '/login' ? 'text-stone-900 border-b-2 border-stone-900 pb-1' : 'text-stone-500 hover:text-stone-900 pb-1 border-b-2 border-transparent'
-              }`}
-            >
-              Sign In
-            </Link>
-          )}
+        {/* Right: Utilities */}
+        <div className="flex gap-8 items-center justify-end flex-1">
+          <Link
+            href={isLoggedIn ? "/account" : "/login"}
+            className="hidden sm:block text-sm text-stone-600 hover:text-stone-900 transition-colors"
+          >
+            {isLoggedIn ? "Account" : "Sign In"}
+          </Link>
           
-          <button disabled className="p-2 -mr-2 text-stone-600 hover:text-stone-900 cursor-not-allowed flex items-center gap-1 group">
-            <span className="hidden sm:inline text-sm font-medium tracking-wide mr-1 text-stone-500 group-hover:text-stone-900 transition-colors">Bag</span>
-            <svg className="w-5 h-5 transition-colors group-hover:text-stone-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span className="text-xs font-bold text-stone-900">0</span>
+          <button disabled className="text-stone-600 hover:text-stone-900 transition-colors cursor-not-allowed flex items-center gap-2 group">
+            <span className="hidden sm:inline text-sm">Bag</span>
+            <div className="relative flex items-center">
+              <svg className="w-5 h-5 text-stone-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span className="absolute -top-2 -right-2 bg-stone-900 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                0
+              </span>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#FFFFFF] border-t border-stone-100 absolute w-full shadow-xl">
-          <div className="px-6 pt-4 pb-8 space-y-2">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="block py-4 text-sm font-bold text-stone-900 border-b border-stone-100 uppercase tracking-widest"
-              >
-                {link.name}
-              </Link>
-            ))}
-            <div className="pt-6 flex flex-col gap-4">
-              <Link
-                href={isLoggedIn ? "/account" : "/login"}
-                className="text-sm font-bold text-stone-600 uppercase tracking-widest"
-              >
-                {isLoggedIn ? "My Account" : "Sign In"}
-              </Link>
-            </div>
-          </div>
+      {/* Mobile Navigation Drawer */}
+      <div 
+        className={`md:hidden absolute w-full bg-background border-b border-stone-200 transition-all duration-300 ease-in-out overflow-hidden ${
+          isMobileMenuOpen ? 'max-h-96 opacity-100 shadow-sm' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="px-6 py-8 flex flex-col gap-6">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              className="text-lg font-serif text-stone-900 tracking-wide"
+            >
+              {link.name}
+            </Link>
+          ))}
+          <div className="h-px w-full bg-stone-100 my-2"></div>
+          <Link
+            href={isLoggedIn ? "/account" : "/login"}
+            className="text-sm tracking-widest uppercase text-stone-500"
+          >
+            {isLoggedIn ? "My Account" : "Sign In"}
+          </Link>
         </div>
-      )}
+      </div>
     </header>
   );
 }
@@ -145,14 +140,14 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <Suspense fallback={
-      <header className="bg-[#FFFFFF] border-b border-stone-200 sticky top-0 z-50 h-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+      <header className="bg-background sticky top-0 z-50 h-20">
+        <div className="w-full px-8 md:px-16 h-full flex items-center justify-between">
           <div className="flex-1"></div>
-          <Link href="/" className="flex flex-col items-center">
-            <span className="text-xl md:text-2xl font-black tracking-[0.2em] text-stone-900 font-serif uppercase">
+          <div className="flex-1 flex justify-center">
+            <span className="text-xl md:text-2xl font-serif tracking-[0.2em] font-bold text-stone-900 uppercase">
               THE ANVOR
             </span>
-          </Link>
+          </div>
           <div className="flex-1"></div>
         </div>
       </header>
