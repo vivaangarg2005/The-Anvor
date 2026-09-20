@@ -188,3 +188,82 @@ export async function mergeGuestCart(items: { productId: string; quantity: numbe
   if (!res.ok) throw new Error(data.error || 'Failed to merge cart');
   return data;
 }
+
+// ──────────────────────────────────────────────
+// Address API
+// ──────────────────────────────────────────────
+
+export type AddressType = {
+  _id: string;
+  recipientName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  landmark?: string;
+  isDefault: boolean;
+};
+
+export async function getAddresses(cookieHeader?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+  const res = await fetch(`${API_BASE_URL}/addresses`, {
+    cache: 'no-store',
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    if (res.status === 401) return null;
+    throw new Error(`Failed to fetch addresses: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function addAddress(addressData: Partial<AddressType>) {
+  const res = await fetch(`${API_BASE_URL}/addresses`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(addressData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to add address');
+  return data;
+}
+
+export async function updateAddress(addressId: string, addressData: Partial<AddressType>) {
+  const res = await fetch(`${API_BASE_URL}/addresses/${addressId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(addressData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update address');
+  return data;
+}
+
+export async function deleteAddress(addressId: string) {
+  const res = await fetch(`${API_BASE_URL}/addresses/${addressId}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete address');
+  return data;
+}
+
+export async function setDefaultAddress(addressId: string) {
+  const res = await fetch(`${API_BASE_URL}/addresses/${addressId}/default`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to set default address');
+  return data;
+}

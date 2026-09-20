@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getMe } from '../../lib/api';
 import LogoutButton from './LogoutButton';
+import AddressBook from '../../components/AddressBook';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -38,10 +39,10 @@ export default async function AccountPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-24">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-12">
           
           {/* Left Column: Profile */}
-          <div className="md:col-span-5 flex flex-col gap-12">
+          <div className="md:col-span-5 flex flex-col gap-12 min-w-0 w-full overflow-hidden">
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Profile</h2>
               <dl className="space-y-6">
@@ -69,7 +70,7 @@ export default async function AccountPage() {
           </div>
 
           {/* Right Column: Other Sections */}
-          <div className="md:col-span-7 flex flex-col gap-12">
+          <div className="md:col-span-7 flex flex-col gap-12 min-w-0 w-full overflow-hidden">
             
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Orders</h2>
@@ -83,7 +84,7 @@ export default async function AccountPage() {
 
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Addresses</h2>
-              <p className="text-sm text-stone-400">Address management coming soon.</p>
+              <AddressBook selectable={false} />
             </section>
 
             <section>

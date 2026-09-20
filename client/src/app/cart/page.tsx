@@ -136,16 +136,15 @@ export default function CartPage() {
 
             {isGuest ? (
               <button 
-                onClick={() => router.push('/login?redirect=/cart')}
+                onClick={() => router.push('/login?redirect=/checkout')}
                 className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors hover:bg-stone-800 cursor-pointer mb-4"
               >
                 Proceed to Checkout
               </button>
             ) : (
               <button 
-                disabled 
-                className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors opacity-50 cursor-not-allowed mb-4"
-                title="Checkout functionality coming soon"
+                onClick={() => router.push('/checkout')}
+                className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors hover:bg-stone-800 cursor-pointer mb-4"
               >
                 Proceed to Checkout
               </button>
