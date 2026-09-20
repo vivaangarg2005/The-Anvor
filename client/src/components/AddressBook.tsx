@@ -109,8 +109,8 @@ export default function AddressBook({ selectable, selectedAddressId, onSelectAdd
                 } ${selectable ? 'cursor-pointer' : ''}`}
               >
                 <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-start gap-4 mb-4 min-w-0">
-                  <p className="text-sm text-stone-900 font-medium flex flex-wrap items-center gap-2 break-words min-w-0 flex-1">
-                    <span className="break-all sm:break-words min-w-0">{addr.recipientName}</span>
+                  <p className="text-sm text-stone-900 font-medium flex flex-wrap items-center gap-2 wrap-break-word min-w-0 flex-1">
+                    <span className="break-all sm:wrap-break-word min-w-0">{addr.recipientName}</span>
                     {addr.isDefault && (
                       <span className="text-[9px] bg-stone-900 text-white px-2 py-1 uppercase tracking-widest shrink-0">Default</span>
                     )}
@@ -150,7 +150,7 @@ export default function AddressBook({ selectable, selectedAddressId, onSelectAdd
                     </button>
                   </div>
                 </div>
-                <div className="break-words w-full">
+                <div className="wrap-break-word w-full">
                   <p className="text-sm text-stone-500 mt-2 w-full">{addr.addressLine1}</p>
                   {addr.addressLine2 && <p className="text-sm text-stone-500 w-full">{addr.addressLine2}</p>}
                   <p className="text-sm text-stone-500 w-full">{addr.city}, {addr.state} <span className="break-all">{addr.postalCode}</span></p>
