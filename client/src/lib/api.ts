@@ -346,3 +346,38 @@ export async function verifyPayment(
   return data;
 }
 
+// ──────────────────────────────────────────────
+// Profile Photo API
+// ──────────────────────────────────────────────
+
+/**
+ * Upload (or replace) the authenticated user's profile photo.
+ * Sends multipart/form-data — do NOT manually set Content-Type.
+ */
+export async function uploadProfilePhoto(file: File) {
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  const res = await fetch(`${API_BASE_URL}/profile/photo`, {
+    method: 'POST',
+    credentials: 'include',
+    // No Content-Type header — browser sets it automatically with the correct boundary
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to upload profile photo');
+  return data;
+}
+
+/**
+ * Delete the authenticated user's profile photo.
+ */
+export async function deleteProfilePhoto() {
+  const res = await fetch(`${API_BASE_URL}/profile/photo`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete profile photo');
+  return data;
+}

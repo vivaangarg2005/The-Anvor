@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getMe, getMyOrders } from '../../lib/api';
 import LogoutButton from './LogoutButton';
 import AddressBook from '../../components/AddressBook';
+import ProfilePhotoUploader from '../../components/ProfilePhotoUploader';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -12,6 +13,115 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = 'force-dynamic';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Formats an ISO date string to "21 Sept 2026 · 09:04 AM" in IST (Asia/Kolkata).
+ */
+function formatOrderDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  const datePart = date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timePart = date.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${datePart} · ${timePart.toUpperCase()}`;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function OrderCard({ order }: { order: any }) {
+  // Show up to 3 product thumbnails from order item snapshots
+  const thumbnails: string[] = order.items
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((item: any) => item.productImage)
+    .filter(Boolean)
+    .slice(0, 3);
+
+  const totalItems: number = order.items?.length ?? 0;
+  const extraCount = totalItems > 3 ? totalItems - 3 : 0;
+
+  const paymentBadgeClass =
+    order.paymentStatus === 'PAID'
+      ? 'bg-stone-900 text-stone-50'
+      : order.paymentStatus === 'FAILED'
+      ? 'bg-red-100 text-red-800'
+      : 'bg-orange-100 text-orange-700';
+
+  return (
+    <Link
+      href={`/account/orders/${order._id}`}
+      className="group block border border-stone-200 hover:border-stone-400 transition-colors"
+    >
+      <div className="p-5 flex items-center gap-5">
+        {/* Product Thumbnails */}
+        {thumbnails.length > 0 && (
+          <div className="flex items-center gap-1 shrink-0">
+            {thumbnails.map((src, i) => (
+              <div
+                key={i}
+                className="w-12 h-16 bg-stone-100 overflow-hidden shrink-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+            {extraCount > 0 && (
+              <div className="w-12 h-16 bg-stone-100 flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-bold text-stone-500">+{extraCount}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Order Info */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <p className="text-sm font-bold text-stone-900 truncate group-hover:opacity-70 transition-opacity">
+            {order.orderNumber}
+          </p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-widest">
+            {formatOrderDateTime(order.createdAt)}
+          </p>
+          <p className="text-[10px] text-stone-400 uppercase tracking-widest">
+            {totalItems} {totalItems === 1 ? 'Item' : 'Items'}
+          </p>
+        </div>
+
+        {/* Right: Amount + Status + Arrow */}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <p className="text-sm font-medium text-stone-900">₹{order.grandTotal}</p>
+          <span className={`inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${paymentBadgeClass}`}>
+            {order.paymentStatus}
+          </span>
+        </div>
+
+        {/* Arrow */}
+        <svg
+          className="w-4 h-4 text-stone-400 group-hover:text-stone-900 transition-colors shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </Link>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function AccountPage() {
   // Forward cookie to Express to authenticate the request
@@ -55,7 +165,20 @@ export default async function AccountPage() {
           <div className="md:col-span-5 flex flex-col gap-12 min-w-0 w-full overflow-hidden">
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Profile</h2>
+              
+              {/* Avatar */}
+              <div className="flex justify-center mb-8">
+                <ProfilePhotoUploader
+                  initialUrl={user.profileImageUrl ?? null}
+                  userName={user.name}
+                />
+              </div>
+
               <dl className="space-y-6">
+                <div>
+                  <dt className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">Name</dt>
+                  <dd className="text-sm text-stone-900">{user.name}</dd>
+                </div>
                 <div>
                   <dt className="text-[10px] text-stone-500 uppercase tracking-widest mb-1.5">Phone Number</dt>
                   <dd className="text-sm text-stone-900 flex items-center gap-3">
@@ -92,30 +215,10 @@ export default async function AccountPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {orders.map((order: any) => (
-                    <div key={order._id} className="border border-stone-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <Link href={`/account/orders/${order._id}`} className="text-sm font-bold text-stone-900 hover:opacity-70 transition-opacity">
-                          {order.orderNumber}
-                        </Link>
-                        <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-1">
-                          {new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-stone-900">₹{order.grandTotal}</p>
-                          <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-1">{order.items?.length || 0} items</p>
-                        </div>
-                        <div className="shrink-0">
-                          <span className="inline-block px-3 py-1 bg-stone-100 text-[9px] font-bold text-stone-600 uppercase tracking-widest">
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <OrderCard key={order._id} order={order} />
                   ))}
                 </div>
               )}

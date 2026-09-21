@@ -37,8 +37,8 @@ exports.initiatePayment = async (req, res, next) => {
         success: true,
         data: {
           razorpayOrderId: order.razorpayOrderId,
-          // Amount in paise (authoritative from DB)
-          amount: Math.round(order.grandTotal * 100),
+          // Amount in paise (authoritative from DB, safe float conversion)
+          amount: Math.round(parseFloat(order.grandTotal.toFixed(2)) * 100),
           currency: order.currency || 'INR',
           keyId: process.env.RAZORPAY_KEY_ID,
           orderNumber: order.orderNumber,
@@ -46,8 +46,11 @@ exports.initiatePayment = async (req, res, next) => {
       });
     }
 
-    // Amount must come from DB — never trust client
-    const amountInPaise = Math.round(order.grandTotal * 100); // Razorpay expects paise (integer)
+    // Amount must come from DB — never trust client.
+    // Use toFixed(2) before multiplying to avoid IEEE 754 floating-point drift
+    // on large INR values (e.g. 49999.99 * 100 = 4999998.9999...).
+    // This is safe because INR prices are always expressed to 2 decimal places.
+    const amountInPaise = Math.round(parseFloat(order.grandTotal.toFixed(2)) * 100);
 
     // Create Razorpay order on the backend using secret credentials
     const razorpayOrder = await razorpay.orders.create({

@@ -21,6 +21,7 @@ const sanitizeUser = (user) => ({
   phoneVerified: user.phoneVerified,
   role: user.role,
   isActive: user.isActive,
+  profileImageUrl: user.profileImageUrl || null,
   createdAt: user.createdAt,
 });
 

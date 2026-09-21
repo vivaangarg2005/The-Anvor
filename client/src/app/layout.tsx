@@ -22,12 +22,14 @@ export default async function RootLayout({
 }) {
   // ── Auth State for Header ──
   let isLoggedIn = false;
+  let userProfileImageUrl: string | null = null;
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
     if (cookieHeader) {
       const meResponse = await getMe(cookieHeader);
       isLoggedIn = meResponse?.success === true;
+      userProfileImageUrl = meResponse?.data?.profileImageUrl ?? null;
     }
   } catch {
     isLoggedIn = false;
@@ -37,7 +39,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground min-h-screen flex flex-col`}>
         <CartProvider>
-          <Header isLoggedIn={isLoggedIn} />
+          <Header isLoggedIn={isLoggedIn} profileImageUrl={userProfileImageUrl} />
           {/* Main Content Area */}
           <main className="grow">
             {children}

@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@imagekit/nodejs": "^7.12.1",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -20,6 +21,7 @@
     "express-rate-limit": "^8.7.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.5",
+    "multer": "^2.4.0",
     "puppeteer": "^25.11.0",
     "razorpay": "^2.9.8"
   },

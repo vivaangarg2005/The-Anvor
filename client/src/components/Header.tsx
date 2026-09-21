@@ -18,7 +18,12 @@ function CartCountBadge() {
   );
 }
 
-function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
+interface HeaderContentProps {
+  isLoggedIn: boolean;
+  profileImageUrl: string | null;
+}
+
+function HeaderContent({ isLoggedIn, profileImageUrl }: HeaderContentProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -100,12 +105,25 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
 
         {/* Right: Utilities */}
-        <div className="flex gap-8 items-center justify-end flex-1">
+        <div className="flex gap-6 items-center justify-end flex-1">
           <Link
             href={isLoggedIn ? "/account" : "/login"}
-            className="hidden sm:block text-sm text-stone-600 hover:text-stone-900 transition-colors"
+            className="hidden sm:flex items-center gap-2 text-stone-600 hover:text-stone-900 transition-colors"
+            aria-label={isLoggedIn ? "My Account" : "Sign In"}
           >
-            {isLoggedIn ? "Account" : "Sign In"}
+            {isLoggedIn && profileImageUrl ? (
+              /* Profile photo avatar */
+              <span className="w-7 h-7 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profileImageUrl.includes('?') ? `${profileImageUrl}&tr=w-56,h-56` : `${profileImageUrl}?tr=w-56,h-56`}
+                  alt="My profile"
+                  className="w-full h-full object-cover"
+                />
+              </span>
+            ) : (
+              <span className="text-sm">{isLoggedIn ? "Account" : "Sign In"}</span>
+            )}
           </Link>
           
           <Link href="/cart" className="text-stone-600 hover:text-stone-900 transition-colors flex items-center gap-2 group cursor-pointer">
@@ -139,8 +157,19 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="h-px w-full bg-stone-100 my-2"></div>
           <Link
             href={isLoggedIn ? "/account" : "/login"}
-            className="text-sm tracking-widest uppercase text-stone-500"
+            className="flex items-center gap-3 text-sm tracking-widest uppercase text-stone-500"
           >
+            {isLoggedIn && profileImageUrl && (
+              <span className="w-6 h-6 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profileImageUrl.includes('?') ? `${profileImageUrl}&tr=w-48,h-48` : `${profileImageUrl}?tr=w-48,h-48`}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-full h-full object-cover"
+                />
+              </span>
+            )}
             {isLoggedIn ? "My Account" : "Sign In"}
           </Link>
         </div>
@@ -149,7 +178,13 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   );
 }
 
-export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function Header({
+  isLoggedIn,
+  profileImageUrl = null,
+}: {
+  isLoggedIn: boolean;
+  profileImageUrl?: string | null;
+}) {
   return (
     <Suspense fallback={
       <header className="bg-background/95 backdrop-blur-md sticky top-0 z-50 h-20">
@@ -164,7 +199,7 @@ export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </header>
     }>
-      <HeaderContent isLoggedIn={isLoggedIn} />
+      <HeaderContent isLoggedIn={isLoggedIn} profileImageUrl={profileImageUrl} />
     </Suspense>
   );
 }
