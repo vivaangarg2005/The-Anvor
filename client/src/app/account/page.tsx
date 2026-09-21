@@ -171,6 +171,7 @@ export default async function AccountPage() {
                 <ProfilePhotoUploader
                   initialUrl={user.profileImageUrl ?? null}
                   userName={user.name}
+                  userId={user._id}
                 />
               </div>
 

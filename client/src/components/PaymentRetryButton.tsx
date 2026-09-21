@@ -86,8 +86,7 @@ export default function PaymentRetryButton({ order }: { order: any }) {
       setIsPaymentLoading(false);
     }
   };
-
-  if (order.paymentStatus !== 'PENDING') return null;
+  if (order.paymentStatus === 'PAID') return null;
 
   return (
     <div className="mt-6 flex flex-col items-start gap-3">

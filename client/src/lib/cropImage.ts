@@ -71,9 +71,19 @@ export default async function getCroppedImg(
     return null;
   }
 
-  // Set the size of the cropped canvas
-  croppedCanvas.width = pixelCrop.width;
-  croppedCanvas.height = pixelCrop.height;
+  // Set the size of the cropped canvas (max 512x512 px for avatar display)
+  const MAX_DIMENSION = 512;
+  const maxCropDim = Math.max(pixelCrop.width, pixelCrop.height);
+  const scale = maxCropDim > MAX_DIMENSION ? MAX_DIMENSION / maxCropDim : 1;
+  const targetWidth = Math.max(1, Math.round(pixelCrop.width * scale));
+  const targetHeight = Math.max(1, Math.round(pixelCrop.height * scale));
+
+  croppedCanvas.width = targetWidth;
+  croppedCanvas.height = targetHeight;
+
+  // High quality image smoothing
+  croppedCtx.imageSmoothingEnabled = true;
+  croppedCtx.imageSmoothingQuality = 'high';
 
   // Draw the cropped image onto the new canvas
   croppedCtx.drawImage(
@@ -84,11 +94,11 @@ export default async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height
+    targetWidth,
+    targetHeight
   );
 
-  // As a blob
+  // Output as optimized JPEG blob with 0.85 quality
   return new Promise((resolve) => {
     croppedCanvas.toBlob((blob) => {
       if (!blob) {
@@ -97,6 +107,6 @@ export default async function getCroppedImg(
       }
       const file = new File([blob], 'cropped.jpeg', { type: 'image/jpeg' });
       resolve(file);
-    }, 'image/jpeg');
+    }, 'image/jpeg', 0.85);
   });
 }

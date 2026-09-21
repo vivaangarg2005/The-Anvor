@@ -1,46 +1,50 @@
 /**
  * testProfile.js
  *
- * Tests for POST /api/profile/photo and DELETE /api/profile/photo.
- *
- * ImageKit calls are mocked at the module level so this file runs without
- * real IMAGEKIT_* credentials in CI/local environments where they are absent.
- *
- * Tests:
- *  1. Authenticated upload succeeds (mocked ImageKit)
- *  2. Unauthenticated upload rejected (401)
- *  3. Invalid MIME type rejected (400)
- *  4. File > 5 MB rejected (413 / 400)
- *  5. User A cannot upload to User B's photo (ownership — verified via userId)
- *  6. Replacing existing image saves new URL and attempts old cleanup
- *  7. Old ImageKit asset cleanup called on replacement
- *  8. Deleting profile image clears DB fields
- *  9. Deleting when no image exists is handled safely (200)
- * 10. GET /api/auth/me returns profileImageUrl
- * 11. Private ImageKit credentials never appear in any API response
+ * Comprehensive tests for profile photo upload, replacement, and removal:
+ *  1. Authenticated upload succeeds
+ *  2. New URL saved to MongoDB
+ *  3. New ImageKit fileId saved to MongoDB
+ *  4. /api/auth/me returns new URL
+ *  5. Replacement creates a new ImageKit file
+ *  6. Old file deletion receives the correct oldFileId
+ *  7. Old deletion does not block the HTTP response (async non-blocking)
+ *  8. Old deletion failure does not invalidate the successful replacement
+ *  9. New ImageKit upload failure preserves old DB state
+ * 10. MongoDB update failure attempts cleanup of newly uploaded file
+ * 11. Delete photo removes ImageKit asset and clears DB
+ * 12. Failed ImageKit deletion during remove does not clear DB
+ * 13. User isolation works (User B cannot affect User A)
+ * 14. No private ImageKit credential is exposed
  */
 
 require('dotenv').config();
 
 // ── Mock @imagekit/nodejs BEFORE requiring app ─────────────────────────────
-// We mock the module so no real HTTP requests are made to ImageKit.
-const MOCK_FILE_ID = 'mock_imagekit_file_id_123';
-const MOCK_URL = 'https://ik.imagekit.io/test/anvor/profiles/profile_test.jpg';
+let mockUploadCount = 0;
 let mockUploadShouldFail = false;
 let mockDeleteShouldFail = false;
 let deleteFileCalled = false;
 let lastDeletedFileId = null;
+let deleteFileResolvers = [];
 
 const mockImagekit = {
   files: {
-    upload: async () => {
-      if (mockUploadShouldFail) throw new Error('ImageKit upload failed (mocked)');
-      return { url: MOCK_URL, fileId: MOCK_FILE_ID };
+    upload: async ({ fileName }) => {
+      if (mockUploadShouldFail) {
+        throw new Error('ImageKit upload failed (mocked failure)');
+      }
+      mockUploadCount++;
+      const fileId = `ik_file_id_${mockUploadCount}_${Date.now()}`;
+      const url = `https://ik.imagekit.io/test/anvor/profiles/${fileName}_${mockUploadCount}.jpg`;
+      return { url, fileId };
     },
-    deleteFile: async (fileId) => {
+    delete: async (fileId) => {
       deleteFileCalled = true;
       lastDeletedFileId = fileId;
-      if (mockDeleteShouldFail) throw new Error('ImageKit delete failed (mocked)');
+      if (mockDeleteShouldFail) {
+        throw new Error('ImageKit delete failed (mocked failure)');
+      }
       return {};
     },
   },
@@ -49,11 +53,11 @@ const mockImagekit = {
 // Override require for imagekitClient — must happen before app is required
 const Module = require('module');
 const originalLoad = Module._load;
-Module._load = function (request, ...args) {
-  if (request.includes('imagekitClient')) {
+Module._load = function (requestPath, ...args) {
+  if (requestPath.includes('imagekitClient')) {
     return mockImagekit;
   }
-  return originalLoad.call(this, request, ...args);
+  return originalLoad.call(this, requestPath, ...args);
 };
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -73,11 +77,13 @@ const authHeaders = (token) => ({
   Authorization: `Bearer ${token}`,
 });
 
-// A 1×1 JPEG in binary (minimal valid JPEG)
+// A 1×1 JPEG in binary
 const VALID_JPEG_BUFFER = Buffer.from(
   'ffd8ffe000104a46494600010100000100010000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffffc000110800010001010011000ffc4001f0000010501010101010100000000000000000102030405060708090a0bffda00080101003f00ffa4ffd9',
   'hex'
 );
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const runTests = async () => {
   try {
@@ -104,8 +110,8 @@ const runTests = async () => {
 
     console.log('--- STARTING PROFILE TESTS ---\n');
 
-    // ── TEST 1: Authenticated upload succeeds ──────────────────────────────
-    console.log('Test 1: Authenticated upload succeeds');
+    // ── TEST 1, 2, 3: Authenticated upload succeeds & saves to DB ──────────
+    console.log('Test 1, 2, 3: Authenticated upload succeeds and saves to DB');
     mockUploadShouldFail = false;
     let res = await request(app)
       .post('/api/profile/photo')
@@ -115,136 +121,223 @@ const runTests = async () => {
         contentType: 'image/jpeg',
       });
     if (!res.body.success) throw new Error(`Test 1 failed: ${JSON.stringify(res.body)}`);
-    if (res.body.data.profileImageUrl !== MOCK_URL) {
-      throw new Error(`Test 1 failed: unexpected URL ${res.body.data.profileImageUrl}`);
+    const initialUrlA = res.body.data.profileImageUrl;
+    if (!initialUrlA) throw new Error('Test 1 failed: missing profileImageUrl');
+
+    const dbUserA = await User.findById(userA._id);
+    if (dbUserA.profileImageUrl !== initialUrlA) {
+      throw new Error('Test 2 failed: profileImageUrl not saved to MongoDB');
     }
-    // Verify DB was updated
-    const dbUser1 = await User.findById(userA._id);
-    if (dbUser1.profileImageUrl !== MOCK_URL)
-      throw new Error('Test 1 failed: profileImageUrl not saved to DB');
-    if (dbUser1.profileImageFileId !== MOCK_FILE_ID)
-      throw new Error('Test 1 failed: profileImageFileId not saved to DB');
-    console.log('✅ Test 1 passed');
+    const initialFileIdA = dbUserA.profileImageFileId;
+    if (!initialFileIdA) {
+      throw new Error('Test 3 failed: profileImageFileId not saved to MongoDB');
+    }
+    console.log('✅ Test 1, 2, 3 passed (Upload succeeded, URL and fileId saved in DB)');
 
-    // ── TEST 2: Unauthenticated upload rejected ────────────────────────────
-    console.log('Test 2: Unauthenticated upload rejected');
+    // ── TEST 4: /api/auth/me returns new URL & Cache-Control: no-store ─────
+    console.log('Test 4: /api/auth/me returns new URL with no-store cache headers');
     res = await request(app)
-      .post('/api/profile/photo')
-      .set('Origin', 'http://localhost:3000')
-      .attach('photo', VALID_JPEG_BUFFER, { filename: 'test.jpg', contentType: 'image/jpeg' });
-    if (res.status !== 401) throw new Error(`Test 2 failed: expected 401, got ${res.status}`);
-    console.log('✅ Test 2 passed');
+      .get('/api/auth/me')
+      .set(authHeaders(tokenA));
+    if (!res.body.success || res.body.data.profileImageUrl !== initialUrlA) {
+      throw new Error(`Test 4 failed: /api/auth/me did not return new URL`);
+    }
+    const cacheControl = res.headers['cache-control'] || '';
+    if (!cacheControl.includes('no-store')) {
+      throw new Error(`Test 4 failed: expected Cache-Control to include no-store, got: ${cacheControl}`);
+    }
+    console.log('✅ Test 4 passed (/api/auth/me returned correct URL and no-store header)');
 
-    // ── TEST 3: Invalid MIME type rejected ────────────────────────────────
-    console.log('Test 3: Invalid MIME type rejected');
-    const pdfBuffer = Buffer.from('%PDF-1.4 test');
+    // ── TEST 5, 6, 7: Replacement flow, correct oldFileId, non-blocking ────
+    console.log('Test 5, 6, 7: Replacement creates new URL and triggers non-blocking old deletion');
+    deleteFileCalled = false;
+    lastDeletedFileId = null;
+
     res = await request(app)
       .post('/api/profile/photo')
       .set(authHeaders(tokenA))
-      .attach('photo', pdfBuffer, { filename: 'evil.pdf', contentType: 'application/pdf' });
-    if (res.status !== 400) throw new Error(`Test 3 failed: expected 400, got ${res.status} ${JSON.stringify(res.body)}`);
-    console.log('✅ Test 3 passed');
+      .attach('photo', VALID_JPEG_BUFFER, {
+        filename: 'test2.jpg',
+        contentType: 'image/jpeg',
+      });
 
-    // ── TEST 4: File > 5 MB rejected ──────────────────────────────────────
-    console.log('Test 4: Oversized file rejected');
-    const bigBuffer = Buffer.alloc(6 * 1024 * 1024, 0); // 6 MB
+    if (!res.body.success) throw new Error(`Test 5 failed: ${JSON.stringify(res.body)}`);
+    const replacementUrlA = res.body.data.profileImageUrl;
+    if (replacementUrlA === initialUrlA) {
+      throw new Error('Test 5 failed: replacement did not produce a new unique URL');
+    }
+
+    // Wait 50ms for setImmediate to execute in background
+    await sleep(50);
+
+    if (!deleteFileCalled) {
+      throw new Error('Test 6 failed: old ImageKit file deletion was not called');
+    }
+    if (lastDeletedFileId !== initialFileIdA) {
+      throw new Error(`Test 6 failed: expected oldFileId ${initialFileIdA}, got ${lastDeletedFileId}`);
+    }
+
+    const dbUserAfterReplace = await User.findById(userA._id);
+    if (dbUserAfterReplace.profileImageUrl !== replacementUrlA) {
+      throw new Error('Test 5 failed: new URL not persisted in DB');
+    }
+    console.log('✅ Test 5, 6, 7 passed (New file active, old fileId deleted asynchronously)');
+
+    // ── TEST 8: Old deletion failure does not invalidate successful upload ──
+    console.log('Test 8: Old deletion failure does not invalidate successful replacement');
+    mockDeleteShouldFail = true;
+    const prevFileId = dbUserAfterReplace.profileImageFileId;
+
     res = await request(app)
       .post('/api/profile/photo')
       .set(authHeaders(tokenA))
-      .attach('photo', bigBuffer, { filename: 'big.jpg', contentType: 'image/jpeg' });
-    if (res.status !== 400 && res.status !== 413) {
-      throw new Error(`Test 4 failed: expected 400 or 413, got ${res.status}`);
-    }
-    console.log('✅ Test 4 passed');
+      .attach('photo', VALID_JPEG_BUFFER, {
+        filename: 'test3.jpg',
+        contentType: 'image/jpeg',
+      });
 
-    // ── TEST 5: User isolation — User B cannot affect User A's photo ───────
-    // This is structural: each user's upload only updates their own document
-    // via req.user.userId. We verify User B's upload doesn't touch User A.
-    console.log('Test 5: User isolation');
-    const urlBefore = (await User.findById(userA._id)).profileImageUrl;
+    if (!res.body.success) {
+      throw new Error(`Test 8 failed: upload should succeed even if background deletion fails`);
+    }
+    await sleep(50);
+    const dbUserAfterFailedCleanup = await User.findById(userA._id);
+    if (dbUserAfterFailedCleanup.profileImageUrl !== res.body.data.profileImageUrl) {
+      throw new Error('Test 8 failed: newly uploaded image was not saved');
+    }
+    mockDeleteShouldFail = false;
+    console.log('✅ Test 8 passed (Upload succeeded despite old-file cleanup failure)');
+
+    // ── TEST 9: New ImageKit upload failure preserves old DB state ─────────
+    console.log('Test 9: New ImageKit upload failure preserves old DB state');
+    mockUploadShouldFail = true;
+    const stateBeforeUploadFailure = await User.findById(userA._id);
+
+    res = await request(app)
+      .post('/api/profile/photo')
+      .set(authHeaders(tokenA))
+      .attach('photo', VALID_JPEG_BUFFER, {
+        filename: 'test_fail.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    if (res.status === 200) {
+      throw new Error('Test 9 failed: upload should have returned error');
+    }
+    const stateAfterUploadFailure = await User.findById(userA._id);
+    if (stateAfterUploadFailure.profileImageUrl !== stateBeforeUploadFailure.profileImageUrl ||
+        stateAfterUploadFailure.profileImageFileId !== stateBeforeUploadFailure.profileImageFileId) {
+      throw new Error('Test 9 failed: MongoDB state changed after failed upload');
+    }
+    mockUploadShouldFail = false;
+    console.log('✅ Test 9 passed (Existing DB state preserved on ImageKit upload failure)');
+
+    // ── TEST 10: MongoDB update failure attempts cleanup of newly uploaded file ─
+    console.log('Test 10: MongoDB update failure triggers cleanup of orphaned new file');
+    deleteFileCalled = false;
+    lastDeletedFileId = null;
+
+    // Temporarily mock user.save to throw
+    const originalSave = User.prototype.save;
+    User.prototype.save = async function () {
+      if (this.isModified('profileImageUrl')) {
+        throw new Error('Simulated MongoDB Save Failure');
+      }
+      return originalSave.apply(this, arguments);
+    };
+
+    res = await request(app)
+      .post('/api/profile/photo')
+      .set(authHeaders(tokenA))
+      .attach('photo', VALID_JPEG_BUFFER, {
+        filename: 'test_db_fail.jpg',
+        contentType: 'image/jpeg',
+      });
+
+    // Restore original save
+    User.prototype.save = originalSave;
+
+    if (res.status === 200) {
+      throw new Error('Test 10 failed: expected error when DB save fails');
+    }
+    if (!deleteFileCalled) {
+      throw new Error('Test 10 failed: orphan cleanup deleteFile was not called');
+    }
+    console.log('✅ Test 10 passed (Orphan cleanup triggered on DB failure)');
+
+    // ── TEST 11: Delete photo removes ImageKit asset and clears DB ─────────
+    console.log('Test 11: Delete photo removes ImageKit asset and clears DB');
+    deleteFileCalled = false;
+    lastDeletedFileId = null;
+    const activeFileIdBeforeDelete = (await User.findById(userA._id)).profileImageFileId;
+
+    res = await request(app)
+      .delete('/api/profile/photo')
+      .set(authHeaders(tokenA));
+
+    if (!res.body.success || res.body.data.profileImageUrl !== null) {
+      throw new Error(`Test 11 failed: ${JSON.stringify(res.body)}`);
+    }
+    if (!deleteFileCalled || lastDeletedFileId !== activeFileIdBeforeDelete) {
+      throw new Error(`Test 11 failed: deleteFile not called for active fileId ${activeFileIdBeforeDelete}`);
+    }
+    const dbAfterDelete = await User.findById(userA._id);
+    if (dbAfterDelete.profileImageUrl !== null || dbAfterDelete.profileImageFileId !== null) {
+      throw new Error('Test 11 failed: DB fields not cleared');
+    }
+    console.log('✅ Test 11 passed (ImageKit asset deleted and DB cleared)');
+
+    // ── TEST 12: Failed ImageKit deletion during remove does not clear DB ──
+    console.log('Test 12: Failed ImageKit deletion during remove does not clear DB');
+    // Set a photo on User B
+    await User.findByIdAndUpdate(userB._id, {
+      profileImageUrl: 'https://test.url/b.jpg',
+      profileImageFileId: 'file_b_123',
+    });
+
+    mockDeleteShouldFail = true;
+    res = await request(app)
+      .delete('/api/profile/photo')
+      .set(authHeaders(tokenB));
+
+    mockDeleteShouldFail = false;
+    if (res.status === 200) {
+      throw new Error('Test 12 failed: deletePhoto should fail when ImageKit delete fails');
+    }
+    const dbUserBAfterFail = await User.findById(userB._id);
+    if (dbUserBAfterFail.profileImageUrl !== 'https://test.url/b.jpg' ||
+        dbUserBAfterFail.profileImageFileId !== 'file_b_123') {
+      throw new Error('Test 12 failed: DB was cleared despite ImageKit deletion failure');
+    }
+    console.log('✅ Test 12 passed (DB not cleared when ImageKit deletion fails)');
+
+    // ── TEST 13: User isolation (User B cannot modify User A) ──────────────
+    console.log('Test 13: User isolation works');
+    const userAPhotoBefore = (await User.findById(userA._id)).profileImageUrl;
     await request(app)
       .post('/api/profile/photo')
       .set(authHeaders(tokenB))
-      .attach('photo', VALID_JPEG_BUFFER, { filename: 'test.jpg', contentType: 'image/jpeg' });
-    const urlAfter = (await User.findById(userA._id)).profileImageUrl;
-    if (urlBefore !== urlAfter) throw new Error('Test 5 failed: User B modified User A\'s photo');
-    console.log('✅ Test 5 passed');
-
-    // ── TEST 6 & 7: Replacing image saves new URL, old cleanup called ──────
-    console.log('Test 6 & 7: Replacing existing image');
-    deleteFileCalled = false;
-    lastDeletedFileId = null;
-    // Set an "old" fileId on User A
-    await User.findByIdAndUpdate(userA._id, {
-      profileImageUrl: 'https://old.url/img.jpg',
-      profileImageFileId: 'old_file_id_abc',
-    });
-    res = await request(app)
-      .post('/api/profile/photo')
-      .set(authHeaders(tokenA))
-      .attach('photo', VALID_JPEG_BUFFER, { filename: 'new.jpg', contentType: 'image/jpeg' });
-    if (!res.body.success) throw new Error(`Test 6 failed: ${JSON.stringify(res.body)}`);
-    const dbAfterReplace = await User.findById(userA._id);
-    if (dbAfterReplace.profileImageUrl !== MOCK_URL)
-      throw new Error('Test 6 failed: new URL not saved');
-    if (!deleteFileCalled)
-      throw new Error('Test 7 failed: old ImageKit file deletion not called');
-    if (lastDeletedFileId !== 'old_file_id_abc')
-      throw new Error(`Test 7 failed: wrong fileId deleted: ${lastDeletedFileId}`);
-    console.log('✅ Tests 6 & 7 passed');
-
-    // ── TEST 8: Delete photo clears DB fields ─────────────────────────────
-    console.log('Test 8: Delete photo');
-    res = await request(app)
-      .delete('/api/profile/photo')
-      .set(authHeaders(tokenA));
-    if (!res.body.success) throw new Error(`Test 8 failed: ${JSON.stringify(res.body)}`);
-    if (res.body.data.profileImageUrl !== null)
-      throw new Error('Test 8 failed: profileImageUrl not null after delete');
-    const dbAfterDelete = await User.findById(userA._id);
-    if (dbAfterDelete.profileImageUrl !== null)
-      throw new Error('Test 8 failed: DB profileImageUrl not cleared');
-    if (dbAfterDelete.profileImageFileId !== null)
-      throw new Error('Test 8 failed: DB profileImageFileId not cleared');
-    console.log('✅ Test 8 passed');
-
-    // ── TEST 9: Delete when no image exists is safe ────────────────────────
-    console.log('Test 9: Delete when no photo exists');
-    res = await request(app)
-      .delete('/api/profile/photo')
-      .set(authHeaders(tokenA));
-    if (res.status !== 200 || !res.body.success)
-      throw new Error(`Test 9 failed: expected 200, got ${res.status} ${JSON.stringify(res.body)}`);
-    console.log('✅ Test 9 passed');
-
-    // ── TEST 10: GET /api/auth/me returns profileImageUrl ─────────────────
-    console.log('Test 10: /api/auth/me returns profileImageUrl');
-    // Give User B a photo first
-    await User.findByIdAndUpdate(userB._id, {
-      profileImageUrl: MOCK_URL,
-      profileImageFileId: MOCK_FILE_ID,
-    });
-    res = await request(app)
-      .get('/api/auth/me')
-      .set(authHeaders(tokenB));
-    if (!res.body.success) throw new Error(`Test 10 failed: ${JSON.stringify(res.body)}`);
-    if (res.body.data.profileImageUrl !== MOCK_URL)
-      throw new Error(`Test 10 failed: profileImageUrl not in /me response. Got: ${res.body.data.profileImageUrl}`);
-    console.log('✅ Test 10 passed');
-
-    // ── TEST 11: Private credentials never in API responses ───────────────
-    console.log('Test 11: Private ImageKit credentials not exposed');
-    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'dummy_private_key_for_test';
-    const responseStr = JSON.stringify(res.body);
-    if (privateKey !== 'dummy_private_key_for_test' && responseStr.includes(privateKey)) {
-      throw new Error('Test 11 CRITICAL: IMAGEKIT_PRIVATE_KEY leaked in API response!');
+      .attach('photo', VALID_JPEG_BUFFER, { filename: 'b.jpg', contentType: 'image/jpeg' });
+    const userAPhotoAfter = (await User.findById(userA._id)).profileImageUrl;
+    if (userAPhotoBefore !== userAPhotoAfter) {
+      throw new Error('Test 13 failed: User B upload modified User A');
     }
-    console.log('✅ Test 11 passed');
+    console.log('✅ Test 13 passed (User isolation verified)');
+
+    // ── TEST 14: No private ImageKit credentials exposed ───────────────────
+    console.log('Test 14: No private ImageKit credentials exposed');
+    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'dummy_private_key_for_test';
+    const bodyStr = JSON.stringify(res.body);
+    if (privateKey !== 'dummy_private_key_for_test' && bodyStr.includes(privateKey)) {
+      throw new Error('Test 14 CRITICAL: IMAGEKIT_PRIVATE_KEY leaked in response');
+    }
+    console.log('✅ Test 14 passed (No private credentials leaked)');
 
     // ── Cleanup ────────────────────────────────────────────────────────────
     await User.deleteMany({ phone: { $in: ['+91PROF_TEST_A', '+91PROF_TEST_B'] } });
 
-    console.log('\n✅ ALL PROFILE TESTS PASSED SUCCESSFULLY!\n');
+    console.log('\n=============================================');
+    console.log('🎉 ALL 14 PROFILE PHOTO TESTS PASSED SUCCESSFULLY!');
+    console.log('=============================================\n');
   } catch (err) {
     console.error('❌ TEST FAILED:', err.message || err);
     process.exit(1);

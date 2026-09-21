@@ -11,19 +11,21 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
   const cookieHeader = cookieStore.toString();
   
   let order = null;
+  let shouldRedirect = false;
+
   try {
     const res = await getOrderById(resolvedParams.id, cookieHeader);
     if (res && res.success) {
       order = res.data;
     } else {
-      redirect('/account');
+      shouldRedirect = true;
     }
   } catch (err) {
     console.error(err);
-    redirect('/account');
+    shouldRedirect = true;
   }
 
-  if (!order) {
+  if (shouldRedirect || !order) {
     redirect('/account');
   }
 

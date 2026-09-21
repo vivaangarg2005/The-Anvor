@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { logout } from '../../lib/api';
 import { useCart } from '../../context/CartContext';
+import { setClientUserId } from '../../lib/authStore';
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function LogoutButton() {
     clearCart();
     await logout();
     await refreshCart();
+    setClientUserId(null);
+
     router.push('/');
     router.refresh();
   };

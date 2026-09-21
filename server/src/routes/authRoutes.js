@@ -24,12 +24,10 @@ const authLimiter = rateLimit({
 });
 
 // --- Public ---
-router.use(authLimiter); // Apply to all auth routes
-
-router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/otp/request", authController.requestOtp);
-router.post("/otp/verify", authController.verifyOtp);
+router.post("/register", authLimiter, authController.register);
+router.post("/login", authLimiter, authController.login);
+router.post("/otp/request", authLimiter, authController.requestOtp);
+router.post("/otp/verify", authLimiter, authController.verifyOtp);
 router.post("/logout", authController.logout);
 
 // --- Protected ---

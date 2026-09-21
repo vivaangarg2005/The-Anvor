@@ -1,14 +1,16 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Cropper, { Area } from 'react-easy-crop';
 import { uploadProfilePhoto, deleteProfilePhoto } from '../lib/api';
 import getCroppedImg from '../lib/cropImage';
+import { getClientUserId, setClientUserId } from '../lib/authStore';
 
 interface Props {
   initialUrl: string | null;
   userName: string;
+  userId?: string | null;
 }
 
 /**
@@ -23,12 +25,42 @@ function getInitials(name: string): string {
     .join('');
 }
 
-export default function ProfilePhotoUploader({ initialUrl, userName }: Props) {
+export default function ProfilePhotoUploader({ initialUrl, userName, userId = null }: Props) {
   const router = useRouter();
-  const [photoUrl, setPhotoUrl] = useState<string | null>(initialUrl);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [eventPhotoUrl, setEventPhotoUrl] = useState<string | null | undefined>(undefined);
+  const [prevInitialUrl, setPrevInitialUrl] = useState(initialUrl);
+  const [currentUserId, setCurrentUserId] = useState(userId);
+  const [clientUserIdState, setClientUserIdState] = useState(getClientUserId());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastActionTime = useRef<number>(Date.now());
+
+  // Synchronize local display state when initialUrl changes from server revalidation
+  if (initialUrl !== prevInitialUrl || userId !== currentUserId) {
+    setPrevInitialUrl(initialUrl);
+    setCurrentUserId(userId);
+    setEventPhotoUrl(undefined);
+  }
+
+  // Subscribe to authStore changes (cross-page SPA navigation)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const storeId = getClientUserId();
+      if (storeId !== clientUserIdState) {
+        setClientUserIdState(storeId);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [clientUserIdState]);
+
+  // Determine effective identity
+  const effectiveUserId = clientUserIdState !== null ? clientUserIdState : currentUserId;
+  const showStaleFallback = clientUserIdState !== null && clientUserIdState !== currentUserId;
+
+  // Authoritative display URL: instant event override if active, else server prop
+  const basePhotoUrl = showStaleFallback ? null : initialUrl;
+  const photoUrl = eventPhotoUrl !== undefined ? eventPhotoUrl : basePhotoUrl;
 
   // Cropper state
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
@@ -80,8 +112,18 @@ export default function ProfilePhotoUploader({ initialUrl, userName }: Props) {
 
       const result = await uploadProfilePhoto(croppedFile);
       if (result.success && result.data?.profileImageUrl) {
-        // Append timestamp to bust browser cache since the base URL doesn't change
-        setPhotoUrl(`${result.data.profileImageUrl}?t=${Date.now()}`);
+        const newUrl = result.data.profileImageUrl;
+        setEventPhotoUrl(newUrl);
+
+        // Immediate event for Header and other UI listeners in SAME TAB
+        if (typeof window !== 'undefined') {
+          lastActionTime.current = Date.now();
+          window.dispatchEvent(
+            new CustomEvent('profile-photo-updated', { detail: { url: newUrl } })
+          );
+        }
+
+        // Revalidate server components in background
         router.refresh();
       }
     } catch (err) {
@@ -107,7 +149,17 @@ export default function ProfilePhotoUploader({ initialUrl, userName }: Props) {
     setIsUploading(true);
     try {
       await deleteProfilePhoto();
-      setPhotoUrl(null);
+      setEventPhotoUrl(null);
+
+      // Immediate event for Header and other UI listeners in SAME TAB
+      if (typeof window !== 'undefined') {
+        lastActionTime.current = Date.now();
+        window.dispatchEvent(
+          new CustomEvent('profile-photo-updated', { detail: { url: null } })
+        );
+      }
+
+      // Revalidate server components in background
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove photo.');
@@ -193,14 +245,14 @@ export default function ProfilePhotoUploader({ initialUrl, userName }: Props) {
 
         {/* Error */}
         {error && (
-          <p className="text-[10px] text-red-600 text-center max-w-[180px]">{error}</p>
+          <p className="text-[10px] text-red-600 text-center max-w-45">{error}</p>
         )}
       </div>
 
       {/* Cropper Modal Overlay */}
       {cropImageSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 md:p-6 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-[540px] h-[min(580px,calc(100dvh-2rem))] bg-white rounded-xl md:rounded-2xl overflow-hidden flex flex-col shadow-2xl my-auto">
+          <div className="relative w-full max-w-135 h-[min(580px,calc(100dvh-2rem))] bg-white rounded-xl md:rounded-2xl overflow-hidden flex flex-col shadow-2xl my-auto">
             
             {/* Header */}
             <div className="flex items-center px-4 h-14 border-b border-stone-100 shrink-0 bg-white z-10 gap-2">

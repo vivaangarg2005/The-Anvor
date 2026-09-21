@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { registerUser, loginWithPassword, requestOtp, verifyOtp } from '../../lib/api';
 import { useCart } from '../../context/CartContext';
+import { setClientUserId } from '../../lib/authStore';
 import { Suspense } from 'react';
 
 type AuthView = 'login' | 'register' | 'otp-request' | 'otp-verify';
@@ -40,6 +41,7 @@ function LoginContent() {
       if (res.success) {
         clearCart();
         await mergeGuestCartIfAny();
+        setClientUserId(res.data?._id || null);
         router.push(redirectUrl);
         router.refresh();
       } else {
@@ -61,6 +63,7 @@ function LoginContent() {
       if (res.success) {
         clearCart();
         await mergeGuestCartIfAny();
+        setClientUserId(res.data?._id || null);
         router.push(redirectUrl);
         router.refresh();
       } else {
@@ -99,6 +102,7 @@ function LoginContent() {
       if (res.success) {
         clearCart();
         await mergeGuestCartIfAny();
+        setClientUserId(res.data?._id || null);
         router.push(redirectUrl);
         router.refresh();
       } else {

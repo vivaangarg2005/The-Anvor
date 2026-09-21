@@ -100,7 +100,10 @@ export async function verifyOtp(data: { phone: string; otp: string }) {
  * from the incoming Next.js request to the Express API (server-to-server).
  */
 export async function getMe(cookieHeader?: string) {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+  };
   if (cookieHeader) {
     headers['Cookie'] = cookieHeader;
   }
@@ -379,5 +382,91 @@ export async function deleteProfilePhoto() {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to delete profile photo');
+  return data;
+}
+
+// ==========================================
+// 8. ADMIN API
+// ==========================================
+
+export async function getAdminProducts(page = 1, limit = 50) {
+  const res = await fetch(`${API_BASE_URL}/admin/products?page=${page}&limit=${limit}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch admin products');
+  return data;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function createAdminProduct(payload: any) {
+  const res = await fetch(`${API_BASE_URL}/admin/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create product');
+  return data;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateAdminProduct(id: string, payload: any) {
+  const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update product');
+  return data;
+}
+
+export async function deleteAdminProduct(id: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete product');
+  return data;
+}
+
+export async function getAdminOrders(page = 1, limit = 20, status?: string, paymentStatus?: string) {
+  let url = `${API_BASE_URL}/admin/orders?page=${page}&limit=${limit}`;
+  if (status) url += `&status=${status}`;
+  if (paymentStatus) url += `&paymentStatus=${paymentStatus}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch admin orders');
+  return data;
+}
+
+export async function getAdminOrderById(id: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/orders/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch order');
+  return data;
+}
+
+export async function updateAdminOrderStatus(id: string, status: string) {
+  const res = await fetch(`${API_BASE_URL}/admin/orders/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update order status');
   return data;
 }

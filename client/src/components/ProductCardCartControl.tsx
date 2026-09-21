@@ -11,6 +11,7 @@ interface ProductCardCartControlProps {
 export default function ProductCardCartControl({ productId, stockQuantity }: ProductCardCartControlProps) {
   const { cart, addToCart, updateQuantity, removeItem, isUpdating } = useCart();
   const [localLoading, setLocalLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Derive quantity from the SINGLE SOURCE OF TRUTH (CartContext)
   const cartItem = cart?.items.find(item => item.product._id === productId);
@@ -22,11 +23,12 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
     e.stopPropagation();
     if (localLoading || isUpdating || isOutOfStock) return;
     
+    setError(null);
     setLocalLoading(true);
     try {
       await addToCart(productId, 1);
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add to cart.');
     } finally {
       setLocalLoading(false);
     }
@@ -37,11 +39,12 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
     e.stopPropagation();
     if (localLoading || isUpdating || quantity >= 10 || isOutOfStock) return;
 
+    setError(null);
     setLocalLoading(true);
     try {
       await updateQuantity(productId, quantity + 1);
-    } catch (error) {
-      console.error('Failed to increase quantity:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to increase quantity.');
     } finally {
       setLocalLoading(false);
     }
@@ -52,6 +55,7 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
     e.stopPropagation();
     if (localLoading || isUpdating || quantity <= 0) return;
 
+    setError(null);
     setLocalLoading(true);
     try {
       if (quantity === 1) {
@@ -59,8 +63,8 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
       } else {
         await updateQuantity(productId, quantity - 1);
       }
-    } catch (error) {
-      console.error('Failed to decrease quantity:', error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to decrease quantity.');
     } finally {
       setLocalLoading(false);
     }
@@ -96,7 +100,12 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
   }
 
   return (
-    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+    <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="flex flex-col">
+      {error && (
+        <div className="mt-2 text-[10px] text-red-600 font-medium text-center">
+          {error}
+        </div>
+      )}
       <button
         type="button"
         onClick={handleAddToCart}

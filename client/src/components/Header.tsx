@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useCart } from '../context/CartContext';
+import { getClientUserId, setClientUserId } from '../lib/authStore';
 
 function CartCountBadge() {
   const { cart, isLoading } = useCart();
@@ -21,12 +22,62 @@ function CartCountBadge() {
 interface HeaderContentProps {
   isLoggedIn: boolean;
   profileImageUrl: string | null;
+  userId?: string | null;
 }
 
-function HeaderContent({ isLoggedIn, profileImageUrl }: HeaderContentProps) {
+function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderContentProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [eventAvatarUrl, setEventAvatarUrl] = useState<string | null | undefined>(undefined);
+  const [prevPropUrl, setPrevPropUrl] = useState(profileImageUrl);
+  const [currentUserId, setCurrentUserId] = useState(userId);
+  const [clientUserIdState, setClientUserIdState] = useState(getClientUserId());
+  const lastActionTime = useRef<number>(Date.now());
+
+  // If server prop changes after router.refresh(), sync and clear the local event override
+  if (profileImageUrl !== prevPropUrl || userId !== currentUserId) {
+    setPrevPropUrl(profileImageUrl);
+    setCurrentUserId(userId);
+    setEventAvatarUrl(undefined);
+  }
+
+  // Subscribe to authStore changes (cross-page SPA navigation)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const storeId = getClientUserId();
+      if (storeId !== clientUserIdState) {
+        setClientUserIdState(storeId);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [clientUserIdState]);
+
+  // Determine effective identity
+  const effectiveUserId = clientUserIdState !== null ? clientUserIdState : currentUserId;
+  const showStaleFallback = clientUserIdState !== null && clientUserIdState !== currentUserId;
+
+  // Authoritative display URL: instant event override if active, else server prop
+  // If the server prop is stale (e.g. Next.js cache served A when we are B), hide avatar
+  const baseAvatarUrl = showStaleFallback ? null : profileImageUrl;
+  const avatarUrl = eventAvatarUrl !== undefined ? eventAvatarUrl : baseAvatarUrl;
+
+  // Listen for instant client-side profile photo updates without page reload (SAME TAB ONLY)
+  useEffect(() => {
+    const handleProfilePhotoUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url: string | null }>;
+      if (customEvent.detail !== undefined) {
+        lastActionTime.current = Date.now();
+        setEventAvatarUrl(customEvent.detail.url);
+      }
+    };
+
+    window.addEventListener('profile-photo-updated', handleProfilePhotoUpdated);
+    return () => {
+      window.removeEventListener('profile-photo-updated', handleProfilePhotoUpdated);
+    };
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -111,12 +162,12 @@ function HeaderContent({ isLoggedIn, profileImageUrl }: HeaderContentProps) {
             className="hidden sm:flex items-center gap-2 text-stone-600 hover:text-stone-900 transition-colors"
             aria-label={isLoggedIn ? "My Account" : "Sign In"}
           >
-            {isLoggedIn && profileImageUrl ? (
+            {isLoggedIn && avatarUrl ? (
               /* Profile photo avatar */
               <span className="w-7 h-7 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={profileImageUrl.includes('?') ? `${profileImageUrl}&tr=w-56,h-56` : `${profileImageUrl}?tr=w-56,h-56`}
+                  src={avatarUrl.includes('?') ? `${avatarUrl}&tr=w-56,h-56` : `${avatarUrl}?tr=w-56,h-56`}
                   alt="My profile"
                   className="w-full h-full object-cover"
                 />
@@ -159,11 +210,11 @@ function HeaderContent({ isLoggedIn, profileImageUrl }: HeaderContentProps) {
             href={isLoggedIn ? "/account" : "/login"}
             className="flex items-center gap-3 text-sm tracking-widest uppercase text-stone-500"
           >
-            {isLoggedIn && profileImageUrl && (
+            {isLoggedIn && avatarUrl && (
               <span className="w-6 h-6 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={profileImageUrl.includes('?') ? `${profileImageUrl}&tr=w-48,h-48` : `${profileImageUrl}?tr=w-48,h-48`}
+                  src={avatarUrl.includes('?') ? `${avatarUrl}&tr=w-48,h-48` : `${avatarUrl}?tr=w-48,h-48`}
                   alt=""
                   aria-hidden="true"
                   className="w-full h-full object-cover"
@@ -181,9 +232,11 @@ function HeaderContent({ isLoggedIn, profileImageUrl }: HeaderContentProps) {
 export default function Header({
   isLoggedIn,
   profileImageUrl = null,
+  userId = null,
 }: {
   isLoggedIn: boolean;
   profileImageUrl?: string | null;
+  userId?: string | null;
 }) {
   return (
     <Suspense fallback={
@@ -199,7 +252,7 @@ export default function Header({
         </div>
       </header>
     }>
-      <HeaderContent isLoggedIn={isLoggedIn} profileImageUrl={profileImageUrl} />
+      <HeaderContent isLoggedIn={isLoggedIn} profileImageUrl={profileImageUrl} userId={userId} />
     </Suspense>
   );
 }

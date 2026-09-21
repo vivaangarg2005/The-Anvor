@@ -3,12 +3,25 @@
  *
  * Handles profile photo upload and deletion using ImageKit.
  *
- * Security guarantees:
+ * Security & Lifecycle guarantees:
  * - User identity comes ONLY from req.user.userId (JWT-derived).
  * - The client never supplies a userId or ImageKit fileId.
  * - The private ImageKit key is server-side only.
  * - multer enforces 5 MB size limit and MIME-type validation before upload.
- * - Replacement strategy: upload new → save → attempt old cleanup (non-fatal).
+ * - Replacement strategy:
+ *   1. Read existing user's old profileImageFileId.
+ *   2. Upload new cropped image to ImageKit with useUniqueFileName: true.
+ *   3. Save new image URL + fileId to MongoDB.
+ *   4. Return HTTP 200 immediately to the client (non-blocking).
+ *   5. Trigger background async deletion of old ImageKit file via setImmediate().
+ *   6. If MongoDB update fails after upload: attempt cleanup of newly uploaded asset,
+ *      do not alter user's existing DB reference, and return server error.
+ * - Removal strategy:
+ *   1. Read current user's profileImageFileId.
+ *   2. If no photo exists, return 200 idempotently.
+ *   3. Delete ImageKit asset using exact stored fileId. If deletion fails, return error and
+ *      do not clear DB.
+ *   4. Only after successful ImageKit deletion, clear profileImageUrl and profileImageFileId in DB.
  */
 
 const multer = require("multer");
@@ -27,8 +40,8 @@ const upload = multer({
     } else {
       cb(
         new Error(
-          `Unsupported file type. Allowed: ${ALLOWED_MIMES.join(", ")}`,
-        ),
+          `Unsupported file type. Allowed: ${ALLOWED_MIMES.join(", ")}`
+        )
       );
     }
   },
@@ -45,12 +58,10 @@ exports.uploadMiddleware = (req, res, next) => {
 
     // multer file size exceeded
     if (err.code === "LIMIT_FILE_SIZE") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: "File too large. Maximum size is 5 MB.",
-        });
+      return res.status(400).json({
+        success: false,
+        error: "File too large. Maximum size is 5 MB.",
+      });
     }
     // fileFilter rejection (our MIME check)
     if (err.message && err.message.includes("Unsupported file type")) {
@@ -58,12 +69,10 @@ exports.uploadMiddleware = (req, res, next) => {
     }
     // multer unexpected field
     if (err.code === "LIMIT_UNEXPECTED_FILE") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: 'Unexpected file field. Use field name "photo".',
-        });
+      return res.status(400).json({
+        success: false,
+        error: 'Unexpected file field. Use field name "photo".',
+      });
     }
     // Other multer/unknown errors
     next(err);
@@ -72,19 +81,19 @@ exports.uploadMiddleware = (req, res, next) => {
 
 /**
  * Helper: safely delete an ImageKit file by fileId.
- * Returns true on success, false on failure (non-fatal).
+ * Returns true on success, false on failure.
+ * Catches all errors internally so it never throws or causes unhandled rejections.
  */
 async function safeDeleteImageKitFile(fileId) {
   if (!fileId) return true;
   try {
-    // Lazy-load to avoid throwing at module load when env vars are missing
     const imagekit = require("../config/imagekitClient");
-    await imagekit.files.deleteFile(fileId);
+    await imagekit.files.delete(fileId);
     return true;
   } catch (err) {
     console.error(
-      `[Profile] ImageKit cleanup failed for fileId=${fileId}:`,
-      err.message || err,
+      `[Profile] ImageKit deletion failed for fileId=${fileId}:`,
+      err.message || err
     );
     return false;
   }
@@ -92,78 +101,97 @@ async function safeDeleteImageKitFile(fileId) {
 
 /**
  * POST /api/profile/photo
- *
- * Uploads a new profile photo to ImageKit and stores the URL + fileId on the user.
- * If the user already had a photo, the old ImageKit asset is deleted AFTER the
- * new one is safely saved (never deleted before the new one is saved).
  */
 exports.uploadPhoto = async (req, res, next) => {
+  let newlyUploadedFileId = null;
   try {
     const userId = req.user.userId;
 
-    // multer already validated type and size; file should be present
     if (!req.file) {
       return res
         .status(400)
         .json({ success: false, error: "No image file provided." });
     }
 
-    const imagekit = require("../config/imagekitClient");
-
-    // Determine a stable filename using userId for deduplication
-    const ext =
-      req.file.mimetype === "image/png"
-        ? "png"
-        : req.file.mimetype === "image/webp"
-          ? "webp"
-          : "jpg";
-    const fileName = `profile_${userId}.${ext}`;
-
-    // Upload to ImageKit
-    const uploadResult = await imagekit.files.upload({
-      file: req.file.buffer, // Buffer from multer memoryStorage
-      fileName,
-      folder: "/anvor/profiles/",
-      useUniqueFileName: true, // Force new URL every time to bypass all CDN caching
-    });
-
-    const newUrl = uploadResult.url;
-    const newFileId = uploadResult.fileId;
-
-    // Fetch current user to get old fileId (if any)
+    // 1. Read current user's old profileImageFileId
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found." });
     }
-
     const oldFileId = user.profileImageFileId;
 
-    // Save new image data to DB FIRST before attempting old cleanup
+    const imagekit = require("../config/imagekitClient");
+
+    const ext =
+      req.file.mimetype === "image/png"
+        ? "png"
+        : req.file.mimetype === "image/webp"
+        ? "webp"
+        : "jpg";
+    const fileName = `profile_${userId}.${ext}`;
+
+    // 2. Upload new cropped image to ImageKit with useUniqueFileName: true
+    const uploadResult = await imagekit.files.upload({
+      file: req.file.buffer.toString("base64"),
+      fileName,
+      folder: "/anvor/profiles/",
+      useUniqueFileName: true,
+    });
+
+    const newUrl = uploadResult.url;
+    const newFileId = uploadResult.fileId;
+    newlyUploadedFileId = newFileId;
+
+    // 3. Update MongoDB
     user.profileImageUrl = newUrl;
     user.profileImageFileId = newFileId;
     await user.save();
+    newlyUploadedFileId = null; // Successfully saved
 
-    // Now attempt to clean up the old asset (non-fatal)
-    if (oldFileId && oldFileId !== newFileId) {
-      await safeDeleteImageKitFile(oldFileId);
-    }
-
-    return res.status(200).json({
+    // 4. Return successful response immediately (non-blocking)
+    res.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+    res.status(200).json({
       success: true,
       data: {
         profileImageUrl: newUrl,
       },
     });
+
+    // 5. Asynchronous cleanup of old ImageKit file after successful response
+    if (oldFileId && oldFileId !== newFileId) {
+      setImmediate(async () => {
+        try {
+          await safeDeleteImageKitFile(oldFileId);
+        } catch (cleanupErr) {
+          console.error(
+            `[Profile] Background cleanup failed for oldFileId=${oldFileId}:`,
+            cleanupErr.message || cleanupErr
+          );
+        }
+      });
+    }
   } catch (err) {
+    // 4. Database failure safety: If ImageKit upload succeeded but MongoDB update failed,
+    // attempt to clean up the newly created orphan asset
+    if (newlyUploadedFileId) {
+      try {
+        await safeDeleteImageKitFile(newlyUploadedFileId);
+      } catch (cleanupErr) {
+        console.error(
+          `[Profile] Cleanup of orphan fileId=${newlyUploadedFileId} failed:`,
+          cleanupErr.message || cleanupErr
+        );
+      }
+    }
     next(err);
   }
 };
 
 /**
  * DELETE /api/profile/photo
- *
- * Removes the authenticated user's profile photo from ImageKit and clears the DB fields.
- * The fileId to delete is read from the user's own document — never from the client.
  */
 exports.deletePhoto = async (req, res, next) => {
   try {
@@ -175,7 +203,10 @@ exports.deletePhoto = async (req, res, next) => {
     }
 
     if (!user.profileImageUrl && !user.profileImageFileId) {
-      // Idempotent: no photo to delete
+      res.set(
+        "Cache-Control",
+        "no-store, no-cache, must-revalidate, proxy-revalidate"
+      );
       return res
         .status(200)
         .json({ success: true, data: { profileImageUrl: null } });
@@ -183,14 +214,22 @@ exports.deletePhoto = async (req, res, next) => {
 
     const fileId = user.profileImageFileId;
 
-    // Clear DB first so even if ImageKit deletion fails, the URL won't be served
+    // Delete exact ImageKit asset if fileId exists
+    if (fileId) {
+      const imagekit = require("../config/imagekitClient");
+      // If ImageKit deletion throws, let it fail and do NOT clear DB
+      await imagekit.files.delete(fileId);
+    }
+
+    // Only after successful ImageKit deletion, clear DB fields
     user.profileImageUrl = null;
     user.profileImageFileId = null;
     await user.save();
 
-    // Attempt ImageKit deletion (non-fatal)
-    await safeDeleteImageKitFile(fileId);
-
+    res.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
     return res
       .status(200)
       .json({ success: true, data: { profileImageUrl: null } });
