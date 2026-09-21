@@ -49,7 +49,7 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   return (
-    <header className="bg-background sticky top-0 z-50">
+    <header className="bg-background/95 backdrop-blur-md sticky top-0 z-50">
       <div className="w-full px-8 md:px-16 h-20 flex items-center justify-between">
         
         {/* Mobile Left: Menu Toggle */}
@@ -152,7 +152,7 @@ function HeaderContent({ isLoggedIn }: { isLoggedIn: boolean }) {
 export default function Header({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <Suspense fallback={
-      <header className="bg-background sticky top-0 z-50 h-20">
+      <header className="bg-background/95 backdrop-blur-md sticky top-0 z-50 h-20">
         <div className="w-full px-8 md:px-16 h-full flex items-center justify-between">
           <div className="flex-1"></div>
           <div className="flex-1 flex justify-center">

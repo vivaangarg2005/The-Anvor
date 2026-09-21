@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getMe } from '../../lib/api';
+import { getMe, getMyOrders } from '../../lib/api';
 import LogoutButton from './LogoutButton';
 import AddressBook from '../../components/AddressBook';
 import type { Metadata } from 'next';
@@ -25,6 +25,16 @@ export default async function AccountPage() {
   }
 
   const user = meResponse.data;
+  
+  let orders = [];
+  try {
+    const ordersResponse = await getMyOrders(cookieHeader);
+    if (ordersResponse && ordersResponse.success) {
+      orders = ordersResponse.data;
+    }
+  } catch (err) {
+    console.error('Failed to fetch orders', err);
+  }
 
   return (
     <div className="bg-background min-h-screen pb-24">
@@ -74,12 +84,41 @@ export default async function AccountPage() {
             
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Orders</h2>
-              <div className="py-8 text-center bg-transparent border border-stone-200">
-                <p className="text-sm text-stone-500 mb-4">You haven&apos;t placed any orders yet.</p>
-                <Link href="/products" className="inline-block border-b border-stone-900 pb-1 text-[10px] font-bold tracking-widest text-stone-900 hover:text-stone-500 hover:border-stone-500 transition-colors uppercase">
-                  Start Shopping
-                </Link>
-              </div>
+              {orders.length === 0 ? (
+                <div className="py-8 text-center bg-transparent border border-stone-200">
+                  <p className="text-sm text-stone-500 mb-4">You haven&apos;t placed any orders yet.</p>
+                  <Link href="/products" className="inline-block border-b border-stone-900 pb-1 text-[10px] font-bold tracking-widest text-stone-900 hover:text-stone-500 hover:border-stone-500 transition-colors uppercase">
+                    Start Shopping
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {orders.map((order: any) => (
+                    <div key={order._id} className="border border-stone-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <Link href={`/account/orders/${order._id}`} className="text-sm font-bold text-stone-900 hover:opacity-70 transition-opacity">
+                          {order.orderNumber}
+                        </Link>
+                        <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-1">
+                          {new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-stone-900">₹{order.grandTotal}</p>
+                          <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-1">{order.items?.length || 0} items</p>
+                        </div>
+                        <div className="shrink-0">
+                          <span className="inline-block px-3 py-1 bg-stone-100 text-[9px] font-bold text-stone-600 uppercase tracking-widest">
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section>

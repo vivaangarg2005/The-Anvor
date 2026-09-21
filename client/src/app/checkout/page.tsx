@@ -3,18 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
-import { getMe, AddressType } from '../../lib/api';
+import { getMe, AddressType, createOrder } from '../../lib/api';
 import Link from 'next/link';
 import AddressBook from '../../components/AddressBook';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, isLoading: isCartLoading } = useCart();
+  const { cart, isLoading: isCartLoading, refreshCart } = useCart();
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [isOrderPlaced, setIsOrderPlaced] = useState(false);
+  const [orderError, setOrderError] = useState('');
 
   useEffect(() => {
     async function checkAuthAndLoadData() {
@@ -48,16 +51,45 @@ export default function CheckoutPage() {
     }
   };
 
-  // Redirect if cart is empty after loading
+  // Redirect if cart is empty after loading (but not after a successful order)
   useEffect(() => {
-    if (!isCartLoading && !isAuthLoading) {
+    if (!isCartLoading && !isAuthLoading && !isOrderPlaced) {
       if (!cart || cart.items.length === 0) {
         router.replace('/cart');
       }
     }
-  }, [cart, isCartLoading, isAuthLoading, router]);
+  }, [cart, isCartLoading, isAuthLoading, isOrderPlaced, router]);
 
 
+  const handlePlaceOrder = async () => {
+    if (!selectedAddressId) {
+      setOrderError('Please select a shipping address');
+      return;
+    }
+    setOrderError('');
+    setIsPlacingOrder(true);
+    
+    try {
+      const idempotencyKey = crypto.randomUUID();
+      const response = await createOrder({ 
+        addressId: selectedAddressId, 
+        idempotencyKey 
+      });
+      
+      if (response.success) {
+        setIsOrderPlaced(true);
+        await refreshCart();
+        router.push(`/order-success/${response.data._id}`);
+      } else {
+        setOrderError('Failed to place order. Please try again.');
+        setIsPlacingOrder(false);
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setOrderError(err.message || 'An error occurred while placing the order');
+      setIsPlacingOrder(false);
+    }
+  };
 
   if (isCartLoading || isAuthLoading || !user || !cart || cart.items.length === 0) {
     return (
@@ -137,12 +169,18 @@ export default function CheckoutPage() {
               <span>₹{cart.subtotal}</span>
             </div>
 
+            {orderError && (
+              <div className="mb-4 text-[10px] text-red-600 bg-red-50 p-2 border border-red-200">
+                {orderError}
+              </div>
+            )}
+
             <button 
-              disabled
-              className="w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors opacity-50 cursor-not-allowed mb-4"
-              title="Payment integration coming soon"
+              onClick={handlePlaceOrder}
+              disabled={isPlacingOrder || !selectedAddressId}
+              className={`w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors mb-4 ${(isPlacingOrder || !selectedAddressId) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-stone-800'}`}
             >
-              Proceed to Payment
+              {isPlacingOrder ? 'Processing...' : 'Place Order'}
             </button>
             
             <Link 

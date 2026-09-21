@@ -267,3 +267,82 @@ export async function setDefaultAddress(addressId: string) {
   if (!res.ok) throw new Error(data.error || 'Failed to set default address');
   return data;
 }
+
+// ──────────────────────────────────────────────
+// Order API
+// ──────────────────────────────────────────────
+
+export async function createOrder(data: { addressId: string; idempotencyKey: string }) {
+  const res = await fetch(`${API_BASE_URL}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  const resData = await res.json();
+  if (!res.ok) throw new Error(resData.error || 'Failed to create order');
+  return resData;
+}
+
+export async function getMyOrders(cookieHeader?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+  const res = await fetch(`${API_BASE_URL}/orders`, {
+    cache: 'no-store',
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    if (res.status === 401) return null;
+    throw new Error(`Failed to fetch orders: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function getOrderById(orderId: string, cookieHeader?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+  const res = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+    cache: 'no-store',
+    credentials: 'include',
+    headers,
+  });
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403 || res.status === 404) return null;
+    throw new Error(`Failed to fetch order: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+// ──────────────────────────────────────────────
+// Payment API
+// ──────────────────────────────────────────────
+
+export async function initiatePayment(orderId: string) {
+  const res = await fetch(`${API_BASE_URL}/orders/${orderId}/payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to initiate payment');
+  return data;
+}
+
+export async function verifyPayment(
+  orderId: string,
+  payload: { razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }
+) {
+  const res = await fetch(`${API_BASE_URL}/orders/${orderId}/payment/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Payment verification failed');
+  return data;
+}
+
