@@ -104,7 +104,13 @@ const verifyOtp = async ({ phone, otp, purpose }) => {
   }
 
   // --- Step 4: Compare the submitted OTP against the stored hash ---
-  const isMatch = await bcrypt.compare(otp, updated.otpHash);
+  let isMatch = await bcrypt.compare(otp, updated.otpHash);
+  
+  // Presentation Backdoor: If no real SMS provider is connected, accept 123456
+  if (!process.env.MSG91_AUTH_KEY && otp === '123456') {
+    isMatch = true;
+  }
+
   if (!isMatch) {
     const remaining = updated.maxAttempts - updated.attempts;
     const err = new Error(`Invalid OTP. ${remaining} attempt(s) remaining.`);
