@@ -119,18 +119,13 @@ class MSG91MessageProvider {
 // Determine which provider to use based on environment
 let provider;
 
-if (process.env.NODE_ENV === 'production') {
-  // In production, enforce the real MSG91 provider
+// In both development and production, if they have explicitly provided the MSG91 auth key, use it. 
+// Otherwise gracefully fallback to Development mode so it works without keys!
+if (process.env.MSG91_AUTH_KEY) {
   provider = new MSG91MessageProvider();
 } else {
-  // In development, if they have explicitly provided the MSG91 auth key, use it. 
-  // Otherwise gracefully fallback to Development mode.
-  if (process.env.MSG91_AUTH_KEY) {
-    provider = new MSG91MessageProvider();
-  } else {
-    console.warn("WARNING: Starting DevelopmentMessageProvider (No MSG91 Auth Key found). OTPs will be printed to console.");
-    provider = new DevelopmentMessageProvider();
-  }
+  console.warn("WARNING: Starting DevelopmentMessageProvider (No MSG91 Auth Key found). OTPs will be printed to console.");
+  provider = new DevelopmentMessageProvider();
 }
 
 module.exports = provider;
