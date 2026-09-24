@@ -210,22 +210,8 @@ function LoginContent() {
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Welcome Back</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Sign in to your account</p>
 
-              <div className="mb-6 flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google Sign-In was unsuccessful or cancelled.')}
-                  theme="outline"
-                  size="large"
-                  text="continue_with"
-                  width="100%"
-                />
-              </div>
+              {/* Google Login removed for presentation */}
 
-              <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-stone-200"></div>
-                <span className="text-[10px] text-stone-400 font-medium uppercase tracking-[0.2em]">Or with email</span>
-                <div className="flex-1 h-px bg-stone-200"></div>
-              </div>
 
               <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
                 <div>
@@ -273,22 +259,8 @@ function LoginContent() {
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Create Account</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Join The Anvor</p>
 
-              <div className="mb-6 flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google Sign-In was unsuccessful or cancelled.')}
-                  theme="outline"
-                  size="large"
-                  text="signup_with"
-                  width="100%"
-                />
-              </div>
+              {/* Google Login removed for presentation */}
 
-              <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-stone-200"></div>
-                <span className="text-[10px] text-stone-400 font-medium uppercase tracking-[0.2em]">Or with email</span>
-                <div className="flex-1 h-px bg-stone-200"></div>
-              </div>
 
               <form onSubmit={handleRegister} className="space-y-6">
                 <div>
