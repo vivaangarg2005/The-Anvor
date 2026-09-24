@@ -1,4 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+// In the browser, we use a relative path '/api' so it hits the Next.js rewrites in next.config.ts. 
+// This makes the Render backend look like it's on the exact same domain, completely bypassing browser third-party cookie blocks!
+// On the Next.js server, we still need the absolute URL.
+const API_BASE_URL = typeof window !== 'undefined' 
+  ? '/api' 
+  : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api');
 
 export async function getProducts(params?: { category?: string; page?: number; limit?: number }) {
   let url = `${API_BASE_URL}/products`;
