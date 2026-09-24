@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '../components/Header';
 import { getMe } from '../lib/api';
 import { CartProvider } from '../context/CartContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -41,11 +42,13 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-background text-foreground min-h-screen flex flex-col`}>
         <CartProvider>
-          <Header isLoggedIn={isLoggedIn} profileImageUrl={userProfileImageUrl} userId={userId} />
-          {/* Main Content Area */}
-          <main className="grow">
-            {children}
-          </main>
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+            <Header isLoggedIn={isLoggedIn} profileImageUrl={userProfileImageUrl} userId={userId} />
+            {/* Main Content Area */}
+            <main className="grow">
+              {children}
+            </main>
+          </GoogleOAuthProvider>
 
           {/* Refined Minimalist Footer */}
           <footer className="bg-background border-t border-stone-200 pt-16 pb-8 md:pt-20 md:pb-10 mt-auto">

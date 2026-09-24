@@ -28,6 +28,9 @@ router.post("/register", authLimiter, authController.register);
 router.post("/login", authLimiter, authController.login);
 router.post("/otp/request", authLimiter, authController.requestOtp);
 router.post("/otp/verify", authLimiter, authController.verifyOtp);
+router.post("/google", authLimiter, authController.googleAuth);
+router.post("/google/otp", authLimiter, authController.requestGoogleLinkOtp);
+router.post("/google/link", authLimiter, authController.googleLinkAuth);
 router.post("/logout", authController.logout);
 
 // --- Protected ---

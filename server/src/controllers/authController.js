@@ -87,6 +87,54 @@ const getMe = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+const googleAuth = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    const result = await authService.googleAuth({ credential });
+
+    if (result.status === 'SUCCESS') {
+      setTokenCookie(res, result.token);
+      return res.status(200).json({
+        success: true,
+        data: result.user,
+      });
+    } else if (result.status === 'NEEDS_PHONE') {
+      return res.status(200).json({
+        success: true,
+        needsPhone: true,
+        tempToken: result.tempToken,
+        profile: result.profile,
+      });
+    }
+  } catch (error) { next(error); }
+};
+
+const requestGoogleLinkOtp = async (req, res, next) => {
+  try {
+    const { tempToken, phone, channel } = req.body;
+    const result = await authService.requestGoogleLinkOtp({ tempToken, phone, channel });
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) { next(error); }
+};
+
+const googleLinkAuth = async (req, res, next) => {
+  try {
+    const { tempToken, phone, otp } = req.body;
+    const result = await authService.googleLinkAuth({ tempToken, phone, otp });
+
+    setTokenCookie(res, result.token);
+
+    res.status(200).json({
+      success: true,
+      data: result.user,
+    });
+  } catch (error) { next(error); }
+};
+
 const logout = async (req, res) => {
   res.clearCookie(authConfig.cookie.name, {
     httpOnly: authConfig.cookie.httpOnly,
@@ -107,4 +155,7 @@ module.exports = {
   verifyOtp,
   getMe,
   logout,
+  googleAuth,
+  requestGoogleLinkOtp,
+  googleLinkAuth,
 };

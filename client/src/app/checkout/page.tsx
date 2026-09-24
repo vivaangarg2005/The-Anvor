@@ -63,7 +63,7 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
-      setOrderError('Please select a shipping address');
+      setOrderError('Please add a shipping address');
       return;
     }
     setOrderError('');
@@ -170,15 +170,15 @@ export default function CheckoutPage() {
             </div>
 
             {orderError && (
-              <div className="mb-4 text-[10px] text-red-600 bg-red-50 p-2 border border-red-200">
+              <div className="mb-4 text-xs text-red-600 text-center font-medium">
                 {orderError}
               </div>
             )}
 
             <button 
               onClick={handlePlaceOrder}
-              disabled={isPlacingOrder || !selectedAddressId}
-              className={`w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors mb-4 ${(isPlacingOrder || !selectedAddressId) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-stone-800'}`}
+              disabled={isPlacingOrder}
+              className={`w-full bg-stone-900 text-white text-[10px] font-bold h-13 uppercase tracking-widest transition-colors mb-4 ${isPlacingOrder ? 'opacity-50 cursor-not-allowed' : 'hover:bg-stone-800'}`}
             >
               {isPlacingOrder ? 'Processing...' : 'Place Order'}
             </button>

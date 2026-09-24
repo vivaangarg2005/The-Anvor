@@ -1,8 +1,11 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
-
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
+
+  // Only log actual server errors (500s) to the console, not routine 400 validation errors
+  if (statusCode >= 500) {
+    console.error(err.stack);
+  }
 
   // Handle Mongoose Validation Error (e.g. missing required fields)
   if (err.name === 'ValidationError') {
@@ -21,6 +24,11 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
     const field = Object.keys(err.keyValue)[0];
     message = `Duplicate field value entered for '${field}'. Please use another value.`;
+  }
+
+  // In production, mask generic 500 errors to prevent leaking internal paths or DB schema details
+  if (process.env.NODE_ENV !== 'development' && statusCode === 500) {
+    message = 'Internal Server Error';
   }
 
   // Do not send stack traces in production for security

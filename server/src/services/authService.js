@@ -5,6 +5,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const otpService = require('./otpService');
 const authConfig = require('../config/authConfig');
@@ -165,6 +166,44 @@ const requestLoginOtp = async ({ phone, channel }) => {
 };
 
 /**
+ * requestGoogleLinkOtp
+ */
+const requestGoogleLinkOtp = async ({ tempToken, phone, channel }) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(tempToken, authConfig.jwt.secret);
+  } catch (err) {
+    const error = new Error('Invalid or expired Google session.');
+    error.statusCode = 401;
+    throw error;
+  }
+  
+  if (decoded.purpose !== 'GOOGLE_LINK') {
+    const err = new Error('Invalid token purpose.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+  if (!isValidPhone(normalizedPhone)) {
+    const err = new Error('Invalid phone number format.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const validChannels = ['WHATSAPP', 'SMS'];
+  if (!validChannels.includes(channel)) {
+    const err = new Error('Invalid channel.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  await otpService.requestOtp({ phone: normalizedPhone, channel, purpose: 'LOGIN' });
+
+  return { message: 'OTP sent.' };
+};
+
+/**
  * verifyLoginOtp
  */
 const verifyLoginOtp = async ({ phone, otp }) => {
@@ -212,10 +251,147 @@ const getCurrentUser = async (userId) => {
   return sanitizeUser(user);
 };
 
+/**
+ * googleAuth
+ */
+const googleAuth = async ({ credential }) => {
+  if (!credential) {
+    const err = new Error('Google credential is required.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+  const googleId = payload.sub;
+  const email = payload.email;
+  const name = payload.name;
+  const picture = payload.picture;
+
+  let user = await User.findOne({ googleId });
+
+  if (user) {
+    if (!user.isActive) {
+      const err = new Error('This account has been deactivated.');
+      err.statusCode = 403;
+      throw err;
+    }
+    return { status: 'SUCCESS', token: issueToken(user), user: sanitizeUser(user) };
+  }
+
+  // Check if a user exists with this email but without googleId
+  if (email) {
+    const existingEmailUser = await User.findOne({ email });
+    if (existingEmailUser) {
+      const err = new Error('An account with this email already exists. Please log in normally to link your account.');
+      err.statusCode = 409;
+      throw err;
+    }
+  }
+
+  // If no user exists, issue a temporary signed token for the frontend to proceed with phone verification
+  const tempToken = jwt.sign(
+    { googleId, email, name, picture, purpose: 'GOOGLE_LINK' },
+    authConfig.jwt.secret,
+    { expiresIn: '15m' }
+  );
+
+  return { status: 'NEEDS_PHONE', tempToken, profile: { name, email, picture } };
+};
+
+/**
+ * googleLinkAuth
+ */
+const googleLinkAuth = async ({ tempToken, phone, otp }) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(tempToken, authConfig.jwt.secret);
+  } catch (err) {
+    const error = new Error('Invalid or expired Google session. Please try again.');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (decoded.purpose !== 'GOOGLE_LINK') {
+    const err = new Error('Invalid token purpose.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const { googleId, email, name, picture } = decoded;
+
+  const normalizedPhone = normalizePhone(phone);
+  if (!isValidPhone(normalizedPhone)) {
+    const err = new Error('Invalid phone number format.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Verify the OTP
+  await otpService.verifyOtp({ phone: normalizedPhone, otp, purpose: 'LOGIN' });
+
+  // Check if phone already used by another account
+  let user = await User.findOne({ phone: normalizedPhone });
+
+  if (user) {
+    // If the account exists, link it
+    if (!user.isActive) {
+      const err = new Error('This account has been deactivated.');
+      err.statusCode = 403;
+      throw err;
+    }
+    
+    // Safety check: ensure the account doesn't belong to another Google user
+    if (user.googleId && user.googleId !== googleId) {
+      const err = new Error('This phone number is already linked to a different Google account.');
+      err.statusCode = 409;
+      throw err;
+    }
+
+    user.googleId = googleId;
+    user.phoneVerified = true;
+    if (!user.profileImageUrl && picture) {
+      user.profileImageUrl = picture; // Do not overwrite existing profile photo
+    }
+    await user.save();
+  } else {
+    // Check if email already used
+    if (email) {
+      const existingEmailUser = await User.findOne({ email });
+      if (existingEmailUser) {
+        const err = new Error('An account with this email already exists.');
+        err.statusCode = 409;
+        throw err;
+      }
+    }
+
+    // Create the new user
+    user = await User.create({
+      name: name || 'Google User',
+      phone: normalizedPhone,
+      email: email ? email.toLowerCase() : undefined,
+      googleId,
+      phoneVerified: true,
+      role: 'CUSTOMER',
+      profileImageUrl: picture || null,
+    });
+  }
+
+  const token = issueToken(user);
+  return { token, user: sanitizeUser(user) };
+};
+
 module.exports = {
   registerUser,
   loginWithPassword,
   requestLoginOtp,
   verifyLoginOtp,
   getCurrentUser,
+  googleAuth,
+  requestGoogleLinkOtp,
+  googleLinkAuth,
 };

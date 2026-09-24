@@ -163,7 +163,16 @@ export default function AddressBook({ selectable, selectedAddressId, onSelectAdd
           })}
 
           {addresses.length === 0 && activeForm === null && (
-            <p className="text-sm text-stone-500 p-6 border border-stone-200 text-center">No addresses saved yet.</p>
+            <div className="p-8 border border-stone-200 text-center bg-white flex flex-col items-center justify-center">
+              <p className="text-sm text-stone-900 font-medium mb-1">No addresses saved yet</p>
+              <p className="text-xs text-stone-500 mb-6">You need a shipping address to place an order.</p>
+              <button 
+                onClick={() => setActiveForm('add')}
+                className="px-6 py-3 border border-stone-900 text-[10px] font-bold text-stone-900 uppercase tracking-widest hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
+              >
+                + Add New Address
+              </button>
+            </div>
           )}
 
           {activeForm === 'add' && (

@@ -393,6 +393,7 @@ export async function getAdminProducts(page = 1, limit = 50) {
   const res = await fetch(`${API_BASE_URL}/admin/products?page=${page}&limit=${limit}`, {
     method: 'GET',
     credentials: 'include',
+    cache: 'no-store',
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to fetch admin products');
@@ -443,6 +444,7 @@ export async function getAdminOrders(page = 1, limit = 20, status?: string, paym
   const res = await fetch(url, {
     method: 'GET',
     credentials: 'include',
+    cache: 'no-store',
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to fetch admin orders');
@@ -453,9 +455,47 @@ export async function getAdminOrderById(id: string) {
   const res = await fetch(`${API_BASE_URL}/admin/orders/${id}`, {
     method: 'GET',
     credentials: 'include',
+    cache: 'no-store',
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to fetch order');
+  return data;
+}
+
+// Google Auth API
+export async function loginWithGoogle(credential: string) {
+  const res = await fetch(`${API_BASE_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
+  return data; // Could contain { success: true, needsPhone: true, tempToken: ... } OR { success: true, data: user }
+}
+
+export async function requestGoogleLinkOtp(tempToken: string, phone: string, channel: 'WHATSAPP' | 'SMS') {
+  const res = await fetch(`${API_BASE_URL}/auth/google/otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tempToken, phone, channel }),
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to request OTP');
+  return data;
+}
+
+export async function linkGoogleWithPhone(tempToken: string, phone: string, otp: string) {
+  const res = await fetch(`${API_BASE_URL}/auth/google/link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tempToken, phone, otp }),
+    credentials: 'include',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to link Google account');
   return data;
 }
 

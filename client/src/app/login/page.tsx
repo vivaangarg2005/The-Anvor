@@ -3,17 +3,24 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { registerUser, loginWithPassword, requestOtp, verifyOtp } from '../../lib/api';
+import { registerUser, loginWithPassword, requestOtp, verifyOtp, loginWithGoogle, requestGoogleLinkOtp, linkGoogleWithPhone } from '../../lib/api';
+import { GoogleLogin } from '@react-oauth/google';
 import { useCart } from '../../context/CartContext';
 import { setClientUserId } from '../../lib/authStore';
 import { Suspense } from 'react';
 
-type AuthView = 'login' | 'register' | 'otp-request' | 'otp-verify';
+type AuthView = 'login' | 'register' | 'otp-request' | 'otp-verify' | 'google-phone-request' | 'google-phone-verify';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams?.get('redirect') || '/account';
+  
+  let rawRedirectUrl = searchParams?.get('redirect') || '/account';
+  if (!rawRedirectUrl.startsWith('/') || rawRedirectUrl.startsWith('//')) {
+    rawRedirectUrl = '/account';
+  }
+  const redirectUrl = rawRedirectUrl;
+  
   const { mergeGuestCartIfAny, clearCart } = useCart();
   const [view, setView] = useState<AuthView>('login');
   const [error, setError] = useState('');
@@ -27,6 +34,7 @@ function LoginContent() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [otpChannel, setOtpChannel] = useState<'WHATSAPP' | 'SMS'>('WHATSAPP');
+  const [googleTempToken, setGoogleTempToken] = useState('');
 
   const clearMessages = () => { setError(''); setSuccessMessage(''); };
 
@@ -112,6 +120,70 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
+  // ── Google Auth ──
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    clearMessages();
+    setLoading(true);
+    try {
+      if (!credentialResponse.credential) throw new Error('No credential received.');
+      const res = await loginWithGoogle(credentialResponse.credential);
+      
+      if (res.needsPhone) {
+        setGoogleTempToken(res.tempToken);
+        setView('google-phone-request');
+      } else if (res.success) {
+        clearCart();
+        await mergeGuestCartIfAny();
+        setClientUserId(res.data?._id || null);
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
+        setError(res.error || 'Google Login failed.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGooglePhoneRequest = async (channel: 'WHATSAPP' | 'SMS') => {
+    clearMessages();
+    if (!phone) { setError('Phone number is required.'); return; }
+    setOtpChannel(channel);
+    setLoading(true);
+    try {
+      const res = await requestGoogleLinkOtp(googleTempToken, phone, channel);
+      if (res.success) {
+        setSuccessMessage(res.message || 'OTP sent.');
+        setView('google-phone-verify');
+      } else {
+        setError(res.error || 'Failed to send OTP.');
+      }
+    } catch (err: any) { setError(err.message || 'Something went wrong. Please try again.'); }
+    finally { setLoading(false); }
+  };
+
+  const handleGooglePhoneVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
+    if (!otp || otp.length !== 6) { setError('Enter a valid 6-digit OTP.'); return; }
+    setLoading(true);
+    try {
+      const res = await linkGoogleWithPhone(googleTempToken, phone, otp);
+      if (res.success) {
+        clearCart();
+        await mergeGuestCartIfAny();
+        setClientUserId(res.data?._id || null);
+        router.push(redirectUrl);
+        router.refresh();
+      } else {
+        setError(res.error || 'OTP verification failed.');
+      }
+    } catch (err: any) { setError(err.message || 'Something went wrong. Please try again.'); }
+    finally { setLoading(false); }
+  };
+
   // ── Shared Styles ──
   const inputClass = "w-full px-0 py-3 rounded-none border-0 border-b border-stone-300 bg-transparent text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-stone-900 focus:ring-0 transition-colors text-base";
   const primaryBtn = "w-full py-4 bg-stone-900 text-white text-xs font-semibold tracking-widest uppercase hover:bg-stone-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4";
@@ -137,6 +209,23 @@ function LoginContent() {
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Welcome Back</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Sign in to your account</p>
+
+              <div className="mb-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google Sign-In was unsuccessful or cancelled.')}
+                  theme="outline"
+                  size="large"
+                  text="continue_with"
+                  width="100%"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-stone-200"></div>
+                <span className="text-[10px] text-stone-400 font-medium uppercase tracking-[0.2em]">Or with email</span>
+                <div className="flex-1 h-px bg-stone-200"></div>
+              </div>
 
               <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
                 <div>
@@ -183,6 +272,23 @@ function LoginContent() {
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Create Account</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Join The Anvor</p>
+
+              <div className="mb-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError('Google Sign-In was unsuccessful or cancelled.')}
+                  theme="outline"
+                  size="large"
+                  text="signup_with"
+                  width="100%"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-stone-200"></div>
+                <span className="text-[10px] text-stone-400 font-medium uppercase tracking-[0.2em]">Or with email</span>
+                <div className="flex-1 h-px bg-stone-200"></div>
+              </div>
 
               <form onSubmit={handleRegister} className="space-y-6">
                 <div>
@@ -286,6 +392,89 @@ function LoginContent() {
                 <div className="pt-2">
                   <button onClick={() => { clearMessages(); setOtp(''); setView('login'); }} className="text-[10px] text-stone-500 uppercase tracking-widest hover:text-stone-900 transition-colors">
                     ← Back to sign in
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ════════ GOOGLE PHONE ONBOARDING ════════ */}
+          {view === 'google-phone-request' && (
+            <>
+              <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Almost There!</h2>
+              <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest leading-relaxed">
+                Please verify your phone number to complete your Google Sign-In.
+              </p>
+
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="g-phone" className="block text-[10px] font-bold text-stone-500 mb-1 uppercase tracking-widest">Phone Number</label>
+                  <input id="g-phone" type="tel" autoComplete="tel" placeholder="+91 98765 43210" value={phone} onChange={e => setPhone(e.target.value)} className={inputClass} />
+                </div>
+                {error && <p className="text-red-700 text-xs bg-red-50 border border-red-100 px-4 py-3">{error}</p>}
+                
+                <div className="flex flex-col gap-4 mt-6">
+                  <button onClick={() => handleGooglePhoneRequest('WHATSAPP')} disabled={loading} className={primaryBtn}>
+                    {loading ? 'Sending...' : 'Send OTP via WhatsApp'}
+                  </button>
+                  <button onClick={() => handleGooglePhoneRequest('SMS')} disabled={loading} className={secondaryBtn}>
+                    {loading ? 'Sending...' : 'Send OTP via SMS'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-12 text-center">
+                <button onClick={() => { clearMessages(); setView('login'); }} className="text-[10px] text-stone-500 uppercase tracking-widest hover:text-stone-900 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ════════ GOOGLE PHONE OTP VERIFY ════════ */}
+          {view === 'google-phone-verify' && (
+            <>
+              <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Verify Number</h2>
+              <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest leading-relaxed">
+                Sent via {otpChannel === 'WHATSAPP' ? 'WhatsApp' : 'SMS'} to <br/><strong className="text-stone-900">{phone}</strong>
+              </p>
+
+              {successMessage && <p className="text-emerald-700 text-xs bg-emerald-50 border border-emerald-100 px-4 py-3 mb-6 text-center">{successMessage}</p>}
+
+              {process.env.NODE_ENV === 'development' && (
+                <div className="bg-amber-50 border border-amber-200 px-4 py-3 mb-6">
+                  <p className="text-[10px] text-amber-800 font-bold text-center uppercase tracking-widest">🔧 DEV: Check Terminal for OTP</p>
+                </div>
+              )}
+
+              <form onSubmit={handleGooglePhoneVerify} className="space-y-6">
+                <div>
+                  <label htmlFor="g-otp-code" className="block text-[10px] font-bold text-stone-500 mb-1 uppercase tracking-widest text-center">6-Digit Code</label>
+                  <input
+                    id="g-otp-code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="• • • • • •"
+                    value={otp}
+                    onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className={`${inputClass} text-center text-2xl tracking-[0.5em] font-mono border-stone-900`}
+                  />
+                </div>
+                {error && <p className="text-red-700 text-xs bg-red-50 border border-red-100 px-4 py-3">{error}</p>}
+                <button type="submit" disabled={loading || otp.length !== 6} className={primaryBtn}>
+                  {loading ? 'Verifying...' : 'Verify & Continue'}
+                </button>
+              </form>
+
+              <div className="text-center mt-12 space-y-6">
+                <button onClick={() => handleGooglePhoneRequest(otpChannel)} disabled={loading} className="text-[10px] text-stone-900 font-bold uppercase tracking-widest border-b border-stone-900 hover:text-stone-500 hover:border-stone-500 transition-colors disabled:opacity-50">
+                  Resend OTP
+                </button>
+                <div className="pt-2">
+                  <button onClick={() => { clearMessages(); setOtp(''); setView('google-phone-request'); }} className="text-[10px] text-stone-500 uppercase tracking-widest hover:text-stone-900 transition-colors">
+                    ← Change phone number
                   </button>
                 </div>
               </div>

@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       // Optional, as a user could be created purely via OTP auth
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     phoneVerified: {
       type: Boolean,
       default: false,
