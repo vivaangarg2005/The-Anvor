@@ -1,7 +1,7 @@
-/**
- * cartController.js
- * Thin HTTP layer for cart operations.
- */
+
+
+
+
 
 const cartService = require('../services/cartService');
 

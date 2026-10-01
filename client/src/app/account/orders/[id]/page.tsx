@@ -64,11 +64,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest border-b border-stone-200 pb-2">Items</h2>
           
           <div className="space-y-6">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {}
             {order.items.map((item: any) => (
               <div key={item.product} className="flex gap-4">
                 <div className="w-20 h-28 bg-stone-100 shrink-0 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {}
                   <img 
                     src={item.productImage || 'https://via.placeholder.com/100x150?text=No+Image'} 
                     alt={item.productName}

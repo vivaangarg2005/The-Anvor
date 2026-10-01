@@ -1,26 +1,26 @@
-/**
- * testProfile.js
- *
- * Comprehensive tests for profile photo upload, replacement, and removal:
- *  1. Authenticated upload succeeds
- *  2. New URL saved to MongoDB
- *  3. New ImageKit fileId saved to MongoDB
- *  4. /api/auth/me returns new URL
- *  5. Replacement creates a new ImageKit file
- *  6. Old file deletion receives the correct oldFileId
- *  7. Old deletion does not block the HTTP response (async non-blocking)
- *  8. Old deletion failure does not invalidate the successful replacement
- *  9. New ImageKit upload failure preserves old DB state
- * 10. MongoDB update failure attempts cleanup of newly uploaded file
- * 11. Delete photo removes ImageKit asset and clears DB
- * 12. Failed ImageKit deletion during remove does not clear DB
- * 13. User isolation works (User B cannot affect User A)
- * 14. No private ImageKit credential is exposed
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 require('dotenv').config();
 
-// ── Mock @imagekit/nodejs BEFORE requiring app ─────────────────────────────
+
 let mockUploadCount = 0;
 let mockUploadShouldFail = false;
 let mockDeleteShouldFail = false;
@@ -50,7 +50,7 @@ const mockImagekit = {
   },
 };
 
-// Override require for imagekitClient — must happen before app is required
+
 const Module = require('module');
 const originalLoad = Module._load;
 Module._load = function (requestPath, ...args) {
@@ -59,7 +59,7 @@ Module._load = function (requestPath, ...args) {
   }
   return originalLoad.call(this, requestPath, ...args);
 };
-// ────────────────────────────────────────────────────────────────────────────
+
 
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -77,7 +77,7 @@ const authHeaders = (token) => ({
   Authorization: `Bearer ${token}`,
 });
 
-// A 1×1 JPEG in binary
+
 const VALID_JPEG_BUFFER = Buffer.from(
   'ffd8ffe000104a46494600010100000100010000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffffc000110800010001010011000ffc4001f0000010501010101010100000000000000000102030405060708090a0bffda00080101003f00ffa4ffd9',
   'hex'
@@ -92,7 +92,7 @@ const runTests = async () => {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB for Profile Tests...\n');
 
-    // ── Setup ──────────────────────────────────────────────────────────────
+    
     await User.deleteMany({ phone: { $in: ['+91PROF_TEST_A', '+91PROF_TEST_B'] } });
     const userA = await User.create({
       phone: '+91PROF_TEST_A',
@@ -110,7 +110,7 @@ const runTests = async () => {
 
     console.log('--- STARTING PROFILE TESTS ---\n');
 
-    // ── TEST 1, 2, 3: Authenticated upload succeeds & saves to DB ──────────
+    
     console.log('Test 1, 2, 3: Authenticated upload succeeds and saves to DB');
     mockUploadShouldFail = false;
     let res = await request(app)
@@ -134,7 +134,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 1, 2, 3 passed (Upload succeeded, URL and fileId saved in DB)');
 
-    // ── TEST 4: /api/auth/me returns new URL & Cache-Control: no-store ─────
+    
     console.log('Test 4: /api/auth/me returns new URL with no-store cache headers');
     res = await request(app)
       .get('/api/auth/me')
@@ -148,7 +148,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 4 passed (/api/auth/me returned correct URL and no-store header)');
 
-    // ── TEST 5, 6, 7: Replacement flow, correct oldFileId, non-blocking ────
+    
     console.log('Test 5, 6, 7: Replacement creates new URL and triggers non-blocking old deletion');
     deleteFileCalled = false;
     lastDeletedFileId = null;
@@ -167,7 +167,7 @@ const runTests = async () => {
       throw new Error('Test 5 failed: replacement did not produce a new unique URL');
     }
 
-    // Wait 50ms for setImmediate to execute in background
+    
     await sleep(50);
 
     if (!deleteFileCalled) {
@@ -183,7 +183,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 5, 6, 7 passed (New file active, old fileId deleted asynchronously)');
 
-    // ── TEST 8: Old deletion failure does not invalidate successful upload ──
+    
     console.log('Test 8: Old deletion failure does not invalidate successful replacement');
     mockDeleteShouldFail = true;
     const prevFileId = dbUserAfterReplace.profileImageFileId;
@@ -207,7 +207,7 @@ const runTests = async () => {
     mockDeleteShouldFail = false;
     console.log('✅ Test 8 passed (Upload succeeded despite old-file cleanup failure)');
 
-    // ── TEST 9: New ImageKit upload failure preserves old DB state ─────────
+    
     console.log('Test 9: New ImageKit upload failure preserves old DB state');
     mockUploadShouldFail = true;
     const stateBeforeUploadFailure = await User.findById(userA._id);
@@ -231,12 +231,12 @@ const runTests = async () => {
     mockUploadShouldFail = false;
     console.log('✅ Test 9 passed (Existing DB state preserved on ImageKit upload failure)');
 
-    // ── TEST 10: MongoDB update failure attempts cleanup of newly uploaded file ─
+    
     console.log('Test 10: MongoDB update failure triggers cleanup of orphaned new file');
     deleteFileCalled = false;
     lastDeletedFileId = null;
 
-    // Temporarily mock user.save to throw
+    
     const originalSave = User.prototype.save;
     User.prototype.save = async function () {
       if (this.isModified('profileImageUrl')) {
@@ -253,7 +253,7 @@ const runTests = async () => {
         contentType: 'image/jpeg',
       });
 
-    // Restore original save
+    
     User.prototype.save = originalSave;
 
     if (res.status === 200) {
@@ -264,7 +264,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 10 passed (Orphan cleanup triggered on DB failure)');
 
-    // ── TEST 11: Delete photo removes ImageKit asset and clears DB ─────────
+    
     console.log('Test 11: Delete photo removes ImageKit asset and clears DB');
     deleteFileCalled = false;
     lastDeletedFileId = null;
@@ -286,9 +286,9 @@ const runTests = async () => {
     }
     console.log('✅ Test 11 passed (ImageKit asset deleted and DB cleared)');
 
-    // ── TEST 12: Failed ImageKit deletion during remove does not clear DB ──
+    
     console.log('Test 12: Failed ImageKit deletion during remove does not clear DB');
-    // Set a photo on User B
+    
     await User.findByIdAndUpdate(userB._id, {
       profileImageUrl: 'https://test.url/b.jpg',
       profileImageFileId: 'file_b_123',
@@ -310,7 +310,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 12 passed (DB not cleared when ImageKit deletion fails)');
 
-    // ── TEST 13: User isolation (User B cannot modify User A) ──────────────
+    
     console.log('Test 13: User isolation works');
     const userAPhotoBefore = (await User.findById(userA._id)).profileImageUrl;
     await request(app)
@@ -323,7 +323,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 13 passed (User isolation verified)');
 
-    // ── TEST 14: No private ImageKit credentials exposed ───────────────────
+    
     console.log('Test 14: No private ImageKit credentials exposed');
     const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'dummy_private_key_for_test';
     const bodyStr = JSON.stringify(res.body);
@@ -332,7 +332,7 @@ const runTests = async () => {
     }
     console.log('✅ Test 14 passed (No private credentials leaked)');
 
-    // ── Cleanup ────────────────────────────────────────────────────────────
+    
     await User.deleteMany({ phone: { $in: ['+91PROF_TEST_A', '+91PROF_TEST_B'] } });
 
     console.log('\n=============================================');

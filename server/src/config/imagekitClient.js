@@ -1,8 +1,8 @@
-/**
- * imagekitClient.js
- * Initializes the @imagekit/nodejs SDK using server-side environment credentials.
- * The private key NEVER leaves the server process.
- */
+
+
+
+
+
 
 const ImageKit = require('@imagekit/nodejs');
 

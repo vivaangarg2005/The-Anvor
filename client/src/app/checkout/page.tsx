@@ -11,7 +11,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, isLoading: isCartLoading, refreshCart } = useCart();
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const [user, setUser] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
@@ -38,11 +38,11 @@ export default function CheckoutPage() {
   }, [router]);
 
   const handleAddressesLoaded = (addresses: AddressType[]) => {
-    // Selection logic
+    
     if (addresses.length === 0) {
       setSelectedAddressId(undefined);
     } else {
-      // If currently selected address is deleted or invalid, select default
+      
       const currentExists = addresses.find(a => a._id === selectedAddressId);
       if (!currentExists) {
         const defaultAddr = addresses.find(a => a.isDefault);
@@ -51,7 +51,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Redirect if cart is empty after loading (but not after a successful order)
+  
   useEffect(() => {
     if (!isCartLoading && !isAuthLoading && !isOrderPlaced) {
       if (!cart || cart.items.length === 0) {
@@ -84,7 +84,7 @@ export default function CheckoutPage() {
         setOrderError('Failed to place order. Please try again.');
         setIsPlacingOrder(false);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     } catch (err: any) {
       setOrderError(err.message || 'An error occurred while placing the order');
       setIsPlacingOrder(false);
@@ -105,10 +105,10 @@ export default function CheckoutPage() {
 
       <div className="flex flex-col lg:flex-row gap-16">
         
-        {/* Left: Contact & Address */}
+        {}
         <div className="w-full lg:w-2/3 space-y-12">
           
-          {/* Contact Information */}
+          {}
           <section>
             <h2 className="text-sm font-bold text-stone-900 uppercase tracking-widest mb-6">Contact Information</h2>
             <div className="bg-stone-50 p-6 border border-stone-200">
@@ -128,7 +128,7 @@ export default function CheckoutPage() {
 
         </div>
 
-        {/* Right: Order Summary */}
+        {}
         <div className="w-full lg:w-1/3">
           <div className="bg-stone-50 p-8 sticky top-24">
             <h2 className="text-xs font-bold text-stone-900 uppercase tracking-widest mb-6 pb-4 border-b border-stone-200">Order Summary</h2>
@@ -137,7 +137,7 @@ export default function CheckoutPage() {
               {cart.items.map((item) => (
                 <div key={item.product._id} className="flex gap-4">
                   <div className="w-16 h-20 bg-stone-100 shrink-0 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {}
                     <img 
                       src={item.product.image || 'https://via.placeholder.com/100x150?text=No+Image'} 
                       alt={item.product.name}

@@ -87,7 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       itemCount,
       subtotal,
     });
-    // Sync valid items back to storage (prunes inactive ones)
+    
     saveGuestCart(validItems.map(i => ({ productId: i.product._id, quantity: i.quantity })));
   };
 
@@ -113,7 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(response.data);
         setIsGuest(false);
       } else {
-        // Unauthenticated -> Use Guest Cart
+        
         setIsGuest(true);
         const localItems = getGuestCart();
         await hydrateGuestCart(localItems);
@@ -129,9 +129,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     fetchCart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
   const handleGuestAdd = async (productId: string, quantity: number) => {

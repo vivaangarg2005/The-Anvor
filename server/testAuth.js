@@ -16,12 +16,12 @@ const runTests = async () => {
     const purpose = 'LOGIN';
     const channel = 'SMS';
     
-    // Clear previous tests
+    
     await OtpRecord.deleteMany({ phone });
 
-    // 1. requestOtp creates record
+    
     console.log('Testing OTP Request...');
-    // We mock messageProvider to intercept the plaintext OTP
+    
     const messageProvider = require('./src/providers/messageProvider');
     let capturedOtp = null;
     messageProvider.sendMessage = async ({ otp }) => { capturedOtp = otp; };
@@ -29,12 +29,12 @@ const runTests = async () => {
     await otpService.requestOtp({ phone, channel, purpose });
     if (!capturedOtp) throw new Error('OTP was not passed to messageProvider');
     
-    // 2. Plaintext not stored in Mongo
+    
     const record = await OtpRecord.findOne({ phone }).sort({ createdAt: -1 });
     if (record.otpHash === capturedOtp || !record.otpHash) throw new Error('OTP stored in plaintext!');
     console.log('✅ Plaintext not stored in DB (Hashed).');
     
-    // 3. Resend cooldown
+    
     console.log('Testing Resend Cooldown...');
     try {
       await otpService.requestOtp({ phone, channel, purpose });
@@ -44,7 +44,7 @@ const runTests = async () => {
       console.log('✅ Resend cooldown enforced (429).');
     }
     
-    // 4. Invalid OTP
+    
     console.log('Testing Invalid OTP...');
     try {
       await otpService.verifyOtp({ phone, otp: '000000', purpose });
@@ -54,7 +54,7 @@ const runTests = async () => {
       console.log('✅ Invalid OTP rejected.');
     }
     
-    // 5. Max Attempts
+    
     console.log('Testing Max Attempts...');
     try {
       for (let i = 0; i < 4; i++) {
@@ -67,15 +67,15 @@ const runTests = async () => {
       console.log('✅ Max attempts enforced.');
     }
 
-    // 6. Valid OTP
+    
     console.log('Testing Valid OTP (after clearing old record)...');
     await OtpRecord.deleteMany({ phone });
     await otpService.requestOtp({ phone, channel, purpose });
     
-    // 7. Expired OTP
+    
     console.log('Testing Expired OTP...');
     const expiredRecord = await OtpRecord.findOne({ phone }).sort({ createdAt: -1 });
-    expiredRecord.expiresAt = new Date(Date.now() - 1000); // Set to past
+    expiredRecord.expiresAt = new Date(Date.now() - 1000); 
     await expiredRecord.save();
     try {
       await otpService.verifyOtp({ phone, otp: capturedOtp, purpose });
@@ -85,7 +85,7 @@ const runTests = async () => {
       console.log('✅ Expired OTP rejected.');
     }
 
-    // Request new for valid verification
+    
     await OtpRecord.deleteMany({ phone });
     await otpService.requestOtp({ phone, channel, purpose });
 
@@ -93,7 +93,7 @@ const runTests = async () => {
     await otpService.verifyOtp({ phone, otp: capturedOtp, purpose });
     console.log('✅ Valid OTP verified successfully.');
 
-    // 8. Consumed/Replayed OTP
+    
     try {
       await otpService.verifyOtp({ phone, otp: capturedOtp, purpose });
       throw new Error('Consumed OTP accepted again');

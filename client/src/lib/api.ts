@@ -1,6 +1,6 @@
-// In the browser, we use a relative path '/api' so it hits the Next.js rewrites in next.config.ts. 
-// This makes the Render backend look like it's on the exact same domain, completely bypassing browser third-party cookie blocks!
-// On the Next.js server, we still need the absolute URL.
+
+
+
 const API_BASE_URL = typeof window !== 'undefined' 
   ? '/api' 
   : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api');
@@ -21,8 +21,8 @@ export async function getProducts(params?: { category?: string; page?: number; l
   }
 
   const res = await fetch(url, { 
-    // In a real production app, you might use 'force-cache' with revalidation, 
-    // but for this development phase, we want fresh data.
+    
+    
     cache: 'no-store' 
   });
   
@@ -55,15 +55,15 @@ export async function getCategories() {
   return res.json();
 }
 
-// ──────────────────────────────────────────────
-// Auth API
-// ──────────────────────────────────────────────
+
+
+
 
 export async function registerUser(data: { name: string; phone: string; email?: string; password: string }) {
   const res = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Send/receive HttpOnly cookies
+    credentials: 'include', 
     body: JSON.stringify(data),
   });
   return res.json();
@@ -99,11 +99,11 @@ export async function verifyOtp(data: { phone: string; otp: string }) {
   return res.json();
 }
 
-/**
- * getMe — used by Server Components to verify the current session.
- * Accepts an optional cookie string to forward the browser's HttpOnly cookie
- * from the incoming Next.js request to the Express API (server-to-server).
- */
+
+
+
+
+
 export async function getMe(cookieHeader?: string) {
   const headers: Record<string, string> = {
     'Cache-Control': 'no-cache',
@@ -131,9 +131,9 @@ export async function logout() {
   return res.json();
 }
 
-// ──────────────────────────────────────────────
-// Cart API
-// ──────────────────────────────────────────────
+
+
+
 
 export async function getCart(cookieHeader?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -197,9 +197,9 @@ export async function mergeGuestCart(items: { productId: string; quantity: numbe
   return data;
 }
 
-// ──────────────────────────────────────────────
-// Address API
-// ──────────────────────────────────────────────
+
+
+
 
 export type AddressType = {
   _id: string;
@@ -276,9 +276,9 @@ export async function setDefaultAddress(addressId: string) {
   return data;
 }
 
-// ──────────────────────────────────────────────
-// Order API
-// ──────────────────────────────────────────────
+
+
+
 
 export async function createOrder(data: { addressId: string; idempotencyKey: string }) {
   const res = await fetch(`${API_BASE_URL}/orders`, {
@@ -324,9 +324,9 @@ export async function getOrderById(orderId: string, cookieHeader?: string) {
   return res.json();
 }
 
-// ──────────────────────────────────────────────
-// Payment API
-// ──────────────────────────────────────────────
+
+
+
 
 export async function initiatePayment(orderId: string) {
   const res = await fetch(`${API_BASE_URL}/orders/${orderId}/payment`, {
@@ -354,14 +354,14 @@ export async function verifyPayment(
   return data;
 }
 
-// ──────────────────────────────────────────────
-// Profile Photo API
-// ──────────────────────────────────────────────
 
-/**
- * Upload (or replace) the authenticated user's profile photo.
- * Sends multipart/form-data — do NOT manually set Content-Type.
- */
+
+
+
+
+
+
+
 export async function uploadProfilePhoto(file: File) {
   const formData = new FormData();
   formData.append('photo', file);
@@ -369,7 +369,7 @@ export async function uploadProfilePhoto(file: File) {
   const res = await fetch(`${API_BASE_URL}/profile/photo`, {
     method: 'POST',
     credentials: 'include',
-    // No Content-Type header — browser sets it automatically with the correct boundary
+    
     body: formData,
   });
   const data = await res.json();
@@ -377,9 +377,9 @@ export async function uploadProfilePhoto(file: File) {
   return data;
 }
 
-/**
- * Delete the authenticated user's profile photo.
- */
+
+
+
 export async function deleteProfilePhoto() {
   const res = await fetch(`${API_BASE_URL}/profile/photo`, {
     method: 'DELETE',
@@ -390,9 +390,9 @@ export async function deleteProfilePhoto() {
   return data;
 }
 
-// ==========================================
-// 8. ADMIN API
-// ==========================================
+
+
+
 
 export async function getAdminProducts(page = 1, limit = 50) {
   const res = await fetch(`${API_BASE_URL}/admin/products?page=${page}&limit=${limit}`, {
@@ -405,7 +405,7 @@ export async function getAdminProducts(page = 1, limit = 50) {
   return data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export async function createAdminProduct(payload: any) {
   const res = await fetch(`${API_BASE_URL}/admin/products`, {
     method: 'POST',
@@ -418,7 +418,7 @@ export async function createAdminProduct(payload: any) {
   return data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export async function updateAdminProduct(id: string, payload: any) {
   const res = await fetch(`${API_BASE_URL}/admin/products/${id}`, {
     method: 'PATCH',
@@ -467,7 +467,7 @@ export async function getAdminOrderById(id: string) {
   return data;
 }
 
-// Google Auth API
+
 export async function loginWithGoogle(credential: string) {
   const res = await fetch(`${API_BASE_URL}/auth/google`, {
     method: 'POST',
@@ -477,7 +477,7 @@ export async function loginWithGoogle(credential: string) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
-  return data; // Could contain { success: true, needsPhone: true, tempToken: ... } OR { success: true, data: user }
+  return data; 
 }
 
 export async function requestGoogleLinkOtp(tempToken: string, phone: string, channel: 'WHATSAPP' | 'SMS') {

@@ -13,7 +13,7 @@ const createAddress = async (req, res, next) => {
   try {
     const { recipientName, phone, addressLine1, addressLine2, city, state, postalCode, country, landmark, isDefault } = req.body;
     
-    // Whitelist input to avoid mass-assignment
+    
     const addressData = {
       recipientName, phone, addressLine1, addressLine2, city, state, postalCode, country, landmark, isDefault
     };
@@ -33,7 +33,7 @@ const updateAddress = async (req, res, next) => {
       recipientName, phone, addressLine1, addressLine2, city, state, postalCode, country, landmark, isDefault
     };
 
-    // Remove undefined fields so they don't overwrite with null
+    
     Object.keys(addressData).forEach(key => addressData[key] === undefined && delete addressData[key]);
 
     const address = await addressService.updateAddress(req.user.userId, req.params.id, addressData);

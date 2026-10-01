@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCategories } from '../../lib/api';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export default function ProductForm({ initialData = null, onSubmit, isLoading }: { initialData?: any, onSubmit: (data: any) => Promise<void>, isLoading: boolean }) {
   const router = useRouter();
   const [categories, setCategories] = useState<{_id: string, name: string}[]>([]);
@@ -28,7 +28,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
         const res = await getCategories();
         if (res.success) {
           setCategories(res.data);
-          // Auto-select first category if none selected
+          
           if (!formData.category && res.data.length > 0) {
             setFormData(prev => ({ ...prev, category: res.data[0]._id }));
           }
@@ -53,7 +53,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Transform form data to API format
+    
     const payload = {
       ...formData,
       price: parseFloat(formData.price as string),
@@ -69,7 +69,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
     <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 shadow-sm border border-stone-200">
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Name */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Product Name *</label>
           <input
@@ -82,7 +82,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           />
         </div>
 
-        {/* Slug */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Slug (URL)</label>
           <input
@@ -95,7 +95,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           />
         </div>
 
-        {/* SKU */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">SKU *</label>
           <input
@@ -108,7 +108,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           />
         </div>
 
-        {/* Category */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Category *</label>
           <select
@@ -124,7 +124,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           </select>
         </div>
 
-        {/* Price */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Price (₹) *</label>
           <input
@@ -139,7 +139,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           />
         </div>
 
-        {/* Compare At Price */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Compare At Price (₹)</label>
           <input
@@ -153,7 +153,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
           />
         </div>
 
-        {/* Stock */}
+        {}
         <div className="space-y-2">
           <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Stock Quantity *</label>
           <input
@@ -169,7 +169,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
         </div>
       </div>
 
-      {/* Description */}
+      {}
       <div className="space-y-2">
         <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Description *</label>
         <textarea
@@ -182,7 +182,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
         />
       </div>
 
-      {/* Images */}
+      {}
       <div className="space-y-2">
         <label className="text-[10px] font-bold text-stone-900 uppercase tracking-widest">Image URLs * (Comma separated)</label>
         <textarea
@@ -196,7 +196,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
         />
       </div>
 
-      {/* Toggles */}
+      {}
       <div className="flex gap-8 border-t border-stone-200 pt-6">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
@@ -221,7 +221,7 @@ export default function ProductForm({ initialData = null, onSubmit, isLoading }:
         </label>
       </div>
 
-      {/* Actions */}
+      {}
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"

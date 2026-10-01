@@ -36,7 +36,7 @@ const otpRecordSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
-      // MongoDB will automatically delete the document once this date is passed
+      
       index: { expires: '0' } 
     },
     lastSentAt: {

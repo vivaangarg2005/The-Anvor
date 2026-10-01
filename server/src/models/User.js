@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     phone: {
-      // Normalized primary identity
+      
       type: String,
       required: [true, 'Phone number is required'],
       unique: true,
@@ -17,12 +17,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
-      sparse: true, // Allows nulls/undefined but enforces uniqueness if present
+      sparse: true, 
       unique: true,
     },
     passwordHash: {
       type: String,
-      // Optional, as a user could be created purely via OTP auth
+      
     },
     googleId: {
       type: String,

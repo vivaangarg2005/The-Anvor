@@ -13,12 +13,12 @@ const seedData = async () => {
     await mongoose.connect(mongoUri);
     console.log('Connected to MongoDB for seeding...');
 
-    // Clear existing products and categories
+    
     await Category.deleteMany({});
     await Product.deleteMany({});
     console.log('Cleared existing categories and products.');
 
-    // 1. Create Categories
+    
     const categories = await Category.insertMany([
       {
         name: 'Handbags',
@@ -47,7 +47,7 @@ const seedData = async () => {
       catMap[cat.slug] = cat._id;
     });
 
-    // 2. Create Products
+    
     const products = [
       {
         name: 'The Anvor Sovereign Tote',
@@ -145,7 +145,7 @@ const seedData = async () => {
     await Product.insertMany(products);
     console.log(`Successfully seeded ${products.length} luxury products and ${categories.length} categories.`);
 
-    // 3. Ensure Admin user exists
+    
     const adminPhone = '+919999999999';
     const existingAdmin = await User.findOne({ phone: adminPhone });
     if (!existingAdmin) {

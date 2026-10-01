@@ -62,7 +62,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      // sparse is not needed if it's strictly required
+      
     },
     status: {
       type: String,
@@ -105,15 +105,15 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: 'INR',
     },
-    // Razorpay integration fields
+    
     razorpayOrderId: {
       type: String,
-      sparse: true, // null until payment is initiated
+      sparse: true, 
       index: true,
     },
     razorpayPaymentId: {
       type: String,
-      sparse: true, // null until payment is verified
+      sparse: true, 
     },
   },
   { timestamps: true }

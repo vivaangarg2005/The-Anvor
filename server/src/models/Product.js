@@ -57,8 +57,8 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
     attributes: {
-      // Flexible key-value pairs. Enables adding 'laptop_compartment' later 
-      // without changing the core Mongoose schema.
+      
+      
       type: Map,
       of: String,
     },
@@ -66,11 +66,11 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes
-// (slug and sku are already indexed automatically because of unique: true)
-// 3. Category for quickly finding all products in a category
+
+
+
 productSchema.index({ category: 1 });
-// 4. isActive to efficiently filter out disabled products on the public store
+
 productSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

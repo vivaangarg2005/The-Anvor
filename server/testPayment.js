@@ -27,7 +27,7 @@ const runTests = async () => {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB for Payment Tests...');
 
-    // ── Setup ──────────────────────────────────────────
+    
     let category = await Category.findOne({ slug: 'test-category' });
     if (!category) category = await Category.create({ name: 'Test Category', slug: 'test-category', description: 'Test' });
 
@@ -62,7 +62,7 @@ const runTests = async () => {
     const tokenA = generateToken(userA._id);
     const tokenB = generateToken(userB._id);
 
-    // Create internal orders for both users
+    
     const resOrderA = await request(app)
       .post('/api/orders')
       .set(authHeaders(tokenA))
@@ -79,24 +79,24 @@ const runTests = async () => {
 
     console.log('\n--- STARTING PAYMENT TESTS ---\n');
 
-    // TEST 1: Unauthenticated payment preparation rejected
+    
     console.log('Test 1: Unauthenticated payment initiation rejected');
     let res = await request(app).post(`/api/orders/${orderA._id}/payment`).set('Origin', 'http://localhost:3000');
     if (res.status !== 401) throw new Error(`Test 1 failed: expected 401, got ${res.status}`);
 
-    // TEST 2: User A cannot initiate payment for User B's order
+    
     console.log('Test 2: User A cannot pay for User B\'s order');
     res = await request(app)
       .post(`/api/orders/${orderB._id}/payment`)
       .set(authHeaders(tokenA));
     if (res.status !== 403) throw new Error(`Test 2 failed: expected 403, got ${res.status} ${JSON.stringify(res.body)}`);
 
-    // TEST 3 & 4: Backend uses Order.grandTotal (not client-supplied amount)
+    
     console.log('Test 3, 4: Amount comes from server DB, client cannot manipulate');
     res = await request(app)
       .post(`/api/orders/${orderA._id}/payment`)
       .set(authHeaders(tokenA))
-      // Client tries to send a manipulated amount — must be ignored
+      
       .send({ amount: 1, grandTotal: 1 });
     if (!res.body.success) throw new Error(`Test 3 failed: ${JSON.stringify(res.body)}`);
     const expectedAmountPaise = Math.round(orderA.grandTotal * 100);
@@ -104,23 +104,23 @@ const runTests = async () => {
       throw new Error(`Test 4 failed: amount mismatch. Expected ${expectedAmountPaise} paise, got ${res.body.data.amount}`);
     }
 
-    // TEST 5: Razorpay order is created with correct amount
+    
     console.log('Test 5: Razorpay order created (live API call to Razorpay test env)');
     const rzpOrderId = res.body.data.razorpayOrderId;
     if (!rzpOrderId || !rzpOrderId.startsWith('order_')) {
       throw new Error(`Test 5 failed: invalid Razorpay order ID: ${rzpOrderId}`);
     }
 
-    // TEST 6: Correct currency returned
+    
     console.log('Test 6: Correct currency (INR)');
     if (res.body.data.currency !== 'INR') throw new Error(`Test 6 failed: currency is ${res.body.data.currency}`);
 
-    // TEST 7: Razorpay order ID stored on internal order
+    
     console.log('Test 7: razorpayOrderId stored on internal Order document');
     const dbOrder = await Order.findById(orderA._id);
     if (dbOrder.razorpayOrderId !== rzpOrderId) throw new Error('Test 7 failed: razorpayOrderId not stored in DB');
 
-    // TEST 15: Secret key is NEVER returned to frontend
+    
     console.log('Test 15: Secret key never returned to frontend');
     const responseStr = JSON.stringify(res.body);
     if (responseStr.includes(process.env.RAZORPAY_KEY_SECRET)) {
@@ -130,7 +130,7 @@ const runTests = async () => {
       throw new Error('Test 15b failed: keyId not returned correctly');
     }
 
-    // TEST 16: Payment retry does not create duplicate internal orders
+    
     console.log('Test 16: Payment retry reuses existing Razorpay order (no duplicate internal order)');
     const retryRes = await request(app)
       .post(`/api/orders/${orderA._id}/payment`)
@@ -142,7 +142,7 @@ const runTests = async () => {
     const orderCountAfterRetry = await Order.countDocuments({ user: userA._id });
     if (orderCountAfterRetry !== 1) throw new Error(`Test 16 failed: ${orderCountAfterRetry} internal orders created`);
 
-    // TEST 10: Wrong Razorpay order ID rejected during verification
+    
     console.log('Test 10: Wrong Razorpay order ID rejected');
     res = await request(app)
       .post(`/api/orders/${orderA._id}/payment/verify`)
@@ -150,7 +150,7 @@ const runTests = async () => {
       .send({ razorpayOrderId: 'order_WRONGID', razorpayPaymentId: 'pay_FAKE', razorpaySignature: 'fakesig' });
     if (res.status !== 400) throw new Error(`Test 10 failed: expected 400, got ${res.status}`);
 
-    // TEST 9: Invalid signature does NOT result in PAID
+    
     console.log('Test 9: Invalid signature does not mark order PAID');
     res = await request(app)
       .post(`/api/orders/${orderA._id}/payment/verify`)
@@ -164,7 +164,7 @@ const runTests = async () => {
     const stillUnpaid = await Order.findById(orderA._id);
     if (stillUnpaid.paymentStatus === 'PAID') throw new Error('Test 9 CRITICAL: Invalid signature marked order PAID!');
 
-    // TEST 8: Valid payment signature results in PAID
+    
     console.log('Test 8: Valid HMAC-SHA256 signature marks order PAID');
     const fakePaymentId = 'pay_TestValidPayment123';
     const body = rzpOrderId + '|' + fakePaymentId;
@@ -189,7 +189,7 @@ const runTests = async () => {
     if (paidOrder.razorpayPaymentId !== fakePaymentId) throw new Error('Test 8 failed: razorpayPaymentId not stored');
     if (paidOrder.status !== 'PROCESSING') throw new Error('Test 8 failed: status not moved to PROCESSING');
 
-    // TEST 12 & 13: Duplicate verification is safe; already-PAID stays PAID
+    
     console.log('Test 12, 13: Duplicate verification is idempotent; already-PAID order stays PAID');
     const dupRes = await request(app)
       .post(`/api/orders/${orderA._id}/payment/verify`)
@@ -199,7 +199,7 @@ const runTests = async () => {
       throw new Error(`Test 12 failed: duplicate verify returned unexpected result: ${JSON.stringify(dupRes.body)}`);
     }
 
-    // TEST 11: Wrong internal order rejected (User A trying to verify with User B's order ID)
+    
     console.log('Test 11: Cross-order verification rejected (User A cannot verify User B\'s order)');
     const crossRes = await request(app)
       .post(`/api/orders/${orderB._id}/payment/verify`)
@@ -207,12 +207,12 @@ const runTests = async () => {
       .send({ razorpayOrderId: rzpOrderId, razorpayPaymentId: fakePaymentId, razorpaySignature: validSignature });
     if (crossRes.status !== 403) throw new Error(`Test 11 failed: expected 403, got ${crossRes.status}`);
 
-    // TEST 17: User isolation — User B's order still unpaid
+    
     console.log('Test 17: User B\'s order remains in its own state');
     const orderBdb = await Order.findById(orderB._id);
     if (orderBdb.paymentStatus === 'PAID') throw new Error('Test 17 failed: User B order incorrectly marked PAID!');
 
-    // TEST 20: Existing order tests still pass (run a quick sanity check)
+    
     console.log('Test 18, 19, 20: Backward compatibility — auth, cart, order tests are unaffected (run separately)');
 
     console.log('\n✅ ALL PAYMENT TESTS PASSED SUCCESSFULLY!\n');

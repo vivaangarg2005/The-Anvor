@@ -1,7 +1,7 @@
-/**
- * authService.js
- * Centralized authentication business logic.
- */
+
+
+
+
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -11,9 +11,9 @@ const otpService = require('./otpService');
 const authConfig = require('../config/authConfig');
 const { normalizePhone, isValidPhone } = require('../utils/phoneUtils');
 
-/**
- * Safely returns user fields that are appropriate for API responses.
- */
+
+
+
 const sanitizeUser = (user) => ({
   _id: user._id,
   name: user.name,
@@ -26,9 +26,9 @@ const sanitizeUser = (user) => ({
   createdAt: user.createdAt,
 });
 
-/**
- * Issues a signed JWT containing only the userId and role.
- */
+
+
+
 const issueToken = (user) => {
   return jwt.sign(
     { userId: user._id, role: user.role },
@@ -37,9 +37,9 @@ const issueToken = (user) => {
   );
 };
 
-/**
- * registerUser
- */
+
+
+
 const registerUser = async ({ name, phone, email, password }) => {
   const normalizedPhone = normalizePhone(phone);
   if (!isValidPhone(normalizedPhone)) {
@@ -60,7 +60,7 @@ const registerUser = async ({ name, phone, email, password }) => {
     throw err;
   }
 
-  // Check if user already exists
+  
   const existingUser = await User.findOne({ phone: normalizedPhone });
   if (existingUser) {
     const err = new Error('An account with this phone number already exists.');
@@ -75,7 +75,7 @@ const registerUser = async ({ name, phone, email, password }) => {
     phone: normalizedPhone,
     email: email ? email.trim().toLowerCase() : undefined,
     passwordHash,
-    role: 'CUSTOMER',  // FORCED
+    role: 'CUSTOMER',  
   });
 
   const token = issueToken(user);
@@ -83,9 +83,9 @@ const registerUser = async ({ name, phone, email, password }) => {
   return { token, user: sanitizeUser(user) };
 };
 
-/**
- * loginWithPassword
- */
+
+
+
 const loginWithPassword = async ({ phone, email, identifier, password }) => {
   const inputIdentifier = (identifier || phone || email || '').trim();
   if (!inputIdentifier) {
@@ -104,7 +104,7 @@ const loginWithPassword = async ({ phone, email, identifier, password }) => {
         searchPhone = normalizePhone(inputIdentifier);
       }
     } catch {
-      // ignore
+      
     }
     user = await User.findOne({
       $or: [
@@ -138,9 +138,8 @@ const loginWithPassword = async ({ phone, email, identifier, password }) => {
   return { token, user: sanitizeUser(user) };
 };
 
-/**
- * requestLoginOtp
- */
+
+
 const requestLoginOtp = async ({ phone, channel }) => {
   const normalizedPhone = normalizePhone(phone);
   if (!isValidPhone(normalizedPhone)) {
@@ -165,9 +164,9 @@ const requestLoginOtp = async ({ phone, channel }) => {
   return { message: 'If an account exists with this number, an OTP has been sent.' };
 };
 
-/**
- * requestGoogleLinkOtp
- */
+
+
+
 const requestGoogleLinkOtp = async ({ tempToken, phone, channel }) => {
   let decoded;
   try {
@@ -203,16 +202,16 @@ const requestGoogleLinkOtp = async ({ tempToken, phone, channel }) => {
   return { message: 'OTP sent.' };
 };
 
-/**
- * verifyLoginOtp
- */
+
+
+
 const verifyLoginOtp = async ({ phone, otp }) => {
   const normalizedPhone = normalizePhone(phone);
 
-  // Verify the OTP first
+  
   await otpService.verifyOtp({ phone: normalizedPhone, otp, purpose: 'LOGIN' });
 
-  // Look up the user by normalized phone
+  
   const user = await User.findOne({ phone: normalizedPhone });
 
   if (!user) {
@@ -227,7 +226,7 @@ const verifyLoginOtp = async ({ phone, otp }) => {
     throw err;
   }
 
-  // --- Identity Continuity ---
+  
   if (!user.phoneVerified) {
     user.phoneVerified = true;
     await user.save();
@@ -238,9 +237,9 @@ const verifyLoginOtp = async ({ phone, otp }) => {
   return { token, user: sanitizeUser(user) };
 };
 
-/**
- * getCurrentUser
- */
+
+
+
 const getCurrentUser = async (userId) => {
   const user = await User.findById(userId).select('-passwordHash');
   if (!user) {
@@ -251,9 +250,9 @@ const getCurrentUser = async (userId) => {
   return sanitizeUser(user);
 };
 
-/**
- * googleAuth
- */
+
+
+
 const googleAuth = async ({ credential }) => {
   if (!credential) {
     const err = new Error('Google credential is required.');
@@ -283,7 +282,7 @@ const googleAuth = async ({ credential }) => {
     return { status: 'SUCCESS', token: issueToken(user), user: sanitizeUser(user) };
   }
 
-  // Check if a user exists with this email but without googleId
+  
   if (email) {
     const existingEmailUser = await User.findOne({ email });
     if (existingEmailUser) {
@@ -293,7 +292,7 @@ const googleAuth = async ({ credential }) => {
     }
   }
 
-  // If no user exists, issue a temporary signed token for the frontend to proceed with phone verification
+  
   const tempToken = jwt.sign(
     { googleId, email, name, picture, purpose: 'GOOGLE_LINK' },
     authConfig.jwt.secret,
@@ -303,9 +302,9 @@ const googleAuth = async ({ credential }) => {
   return { status: 'NEEDS_PHONE', tempToken, profile: { name, email, picture } };
 };
 
-/**
- * googleLinkAuth
- */
+
+
+
 const googleLinkAuth = async ({ tempToken, phone, otp }) => {
   let decoded;
   try {
@@ -331,21 +330,21 @@ const googleLinkAuth = async ({ tempToken, phone, otp }) => {
     throw err;
   }
 
-  // Verify the OTP
+  
   await otpService.verifyOtp({ phone: normalizedPhone, otp, purpose: 'LOGIN' });
 
-  // Check if phone already used by another account
+  
   let user = await User.findOne({ phone: normalizedPhone });
 
   if (user) {
-    // If the account exists, link it
+    
     if (!user.isActive) {
       const err = new Error('This account has been deactivated.');
       err.statusCode = 403;
       throw err;
     }
     
-    // Safety check: ensure the account doesn't belong to another Google user
+    
     if (user.googleId && user.googleId !== googleId) {
       const err = new Error('This phone number is already linked to a different Google account.');
       err.statusCode = 409;
@@ -355,11 +354,11 @@ const googleLinkAuth = async ({ tempToken, phone, otp }) => {
     user.googleId = googleId;
     user.phoneVerified = true;
     if (!user.profileImageUrl && picture) {
-      user.profileImageUrl = picture; // Do not overwrite existing profile photo
+      user.profileImageUrl = picture; 
     }
     await user.save();
   } else {
-    // Check if email already used
+    
     if (email) {
       const existingEmailUser = await User.findOne({ email });
       if (existingEmailUser) {
@@ -369,7 +368,7 @@ const googleLinkAuth = async ({ tempToken, phone, otp }) => {
       }
     }
 
-    // Create the new user
+    
     user = await User.create({
       name: name || 'Google User',
       phone: normalizedPhone,

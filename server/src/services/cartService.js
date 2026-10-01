@@ -1,24 +1,24 @@
-/**
- * cartService.js
- * Business logic for the shopping cart.
- */
+
+
+
+
 
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
 
-/**
- * Returns a sanitized cart object with authoritative server-side calculations.
- * Prunes items that are no longer active or have been deleted.
- */
+
+
+
+
 const getCart = async (userId) => {
-  // Ensure cart exists
+  
   let cart = await Cart.findOne({ user: userId }).populate('items.product');
 
   if (!cart) {
     cart = await Cart.create({ user: userId, items: [] });
   }
 
-  // Calculate totals and prune invalid items
+  
   let subtotal = 0;
   let itemCount = 0;
   const validItems = [];
@@ -27,14 +27,14 @@ const getCart = async (userId) => {
   for (const item of cart.items) {
     const product = item.product;
 
-    // Check if product exists and is active
+    
     if (!product || !product.isActive) {
-      requiresSave = true; // Needs pruning
+      requiresSave = true; 
       continue;
     }
 
     const qty = item.quantity;
-    const price = product.price; // Authoritative price from DB
+    const price = product.price; 
     const lineTotal = price * qty;
 
     subtotal += lineTotal;
@@ -54,9 +54,9 @@ const getCart = async (userId) => {
     });
   }
 
-  // If we found deleted/inactive items, prune them from the DB silently
+  
   if (requiresSave) {
-    // We only keep the valid ones
+    
     await Cart.updateOne(
       { user: userId },
       { $set: { items: validItems.map(vi => ({ product: vi.product._id, quantity: vi.quantity })) } }
@@ -71,9 +71,9 @@ const getCart = async (userId) => {
   };
 };
 
-/**
- * Add an item to the cart or increment its quantity.
- */
+
+
+
 const addItem = async (userId, productId, quantity) => {
   const qty = Number(quantity);
   if (!Number.isInteger(qty) || qty <= 0) {
@@ -82,7 +82,7 @@ const addItem = async (userId, productId, quantity) => {
     throw err;
   }
 
-  // Authoritative product validation
+  
   const product = await Product.findById(productId);
   if (!product) {
     const err = new Error('Product not found.');
@@ -96,34 +96,34 @@ const addItem = async (userId, productId, quantity) => {
     throw err;
   }
 
-  // We do not decrement stock, but we should not allow adding if out of stock
+  
   if (product.stockQuantity <= 0) {
     const err = new Error('This product is currently out of stock.');
     err.statusCode = 400;
     throw err;
   }
 
-  // Ensure cart exists safely (first-cart creation race)
+  
   await Cart.updateOne(
     { user: userId },
     { $setOnInsert: { user: userId, items: [] } },
     { upsert: true }
   );
 
-  // Atomic operation: Push the item with quantity 0 ONLY if it does not already exist
+  
   await Cart.updateOne(
     { user: userId, 'items.product': { $ne: productId } },
     { $push: { items: { product: productId, quantity: 0 } } }
   );
 
-  // Atomic operation: Increment the quantity safely
+  
   const incCart = await Cart.findOneAndUpdate(
     { user: userId, 'items.product': productId },
     { $inc: { 'items.$.quantity': qty } },
     { new: true }
   );
 
-  // Enforce the maximum cap of 10
+  
   if (incCart) {
     const item = incCart.items.find(i => i.product.toString() === productId.toString());
     if (item && item.quantity > 10) {
@@ -134,13 +134,13 @@ const addItem = async (userId, productId, quantity) => {
     }
   }
 
-  // Return the fully populated and calculated cart
+  
   return getCart(userId);
 };
 
-/**
- * Update the exact quantity of an existing cart item.
- */
+
+
+
 const updateItemQuantity = async (userId, productId, quantity) => {
   const qty = Number(quantity);
   if (!Number.isInteger(qty) || qty <= 0 || qty > 10) {
@@ -163,16 +163,16 @@ const updateItemQuantity = async (userId, productId, quantity) => {
   return getCart(userId);
 };
 
-/**
- * Remove a specific item from the cart.
- */
+
+
+
 const removeItem = async (userId, productId) => {
   const cart = await Cart.findOne({ user: userId });
   if (!cart) {
     return getCart(userId);
   }
 
-  // Atomic pull to avoid race conditions when removing
+  
   await Cart.updateOne(
     { user: userId },
     { $pull: { items: { product: productId } } }
@@ -181,9 +181,9 @@ const removeItem = async (userId, productId) => {
   return getCart(userId);
 };
 
-/**
- * Clear all items from the cart.
- */
+
+
+
 const clearCart = async (userId) => {
   await Cart.updateOne(
     { user: userId },
@@ -193,22 +193,22 @@ const clearCart = async (userId) => {
   return getCart(userId);
 };
 
-/**
- * Merge an array of guest items into the authenticated user's cart.
- */
+
+
+
 const mergeGuestCart = async (userId, items) => {
   if (!items || !Array.isArray(items)) {
     return getCart(userId);
   }
 
-  // Iterate sequentially to avoid massive concurrent spikes if the guest cart is large
+  
   for (const item of items) {
     if (item.productId && item.quantity > 0) {
       try {
         await addItem(userId, item.productId, item.quantity);
       } catch (err) {
-        // Silently ignore individual failures (e.g. out of stock, max 10 exceeded)
-        // so the rest of the merge succeeds
+        
+        
       }
     }
   }

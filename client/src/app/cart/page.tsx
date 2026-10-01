@@ -17,7 +17,7 @@ export default function CartPage() {
     );
   }
 
-  // Handle unauthenticated state or error leading to null cart implicitly treated as empty
+  
   if (!cart || cart.items.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-24 flex flex-col items-center justify-center text-center">
@@ -41,7 +41,7 @@ export default function CartPage() {
 
       <div className="flex flex-col lg:flex-row gap-16">
         
-        {/* Left: Cart Items */}
+        {}
         <div className="w-full lg:w-2/3">
           <div className="hidden md:grid grid-cols-12 pb-4 border-b border-stone-200 text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-6">
             <div className="col-span-6">Product</div>
@@ -53,10 +53,10 @@ export default function CartPage() {
             {cart.items.map((item) => (
               <div key={item.product._id} className="flex flex-col md:grid md:grid-cols-12 md:items-center gap-6">
                 
-                {/* Product Info */}
+                {}
                 <div className="md:col-span-6 flex gap-6">
                   <div className="w-24 h-32 bg-stone-100 shrink-0 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {}
                     <img 
                       src={item.product.image || 'https://via.placeholder.com/200x300?text=No+Image'} 
                       alt={item.product.name}
@@ -78,7 +78,7 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Quantity Controls */}
+                {}
                 <div className="md:col-span-3 flex justify-start md:justify-center">
                   <div className="w-32 border border-stone-200 flex items-center justify-between px-4 h-12 bg-transparent">
                     <button 
@@ -105,7 +105,7 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Line Total */}
+                {}
                 <div className="md:col-span-3 flex justify-start md:justify-end">
                   <span className="text-base text-stone-900">₹{item.lineTotal}</span>
                 </div>
@@ -115,7 +115,7 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Right: Summary */}
+        {}
         <div className="w-full lg:w-1/3">
           <div className="bg-stone-50 p-8">
             <h2 className="text-xs font-bold text-stone-900 uppercase tracking-widest mb-6 pb-4 border-b border-stone-200">Order Summary</h2>

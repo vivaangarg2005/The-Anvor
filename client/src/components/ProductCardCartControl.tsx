@@ -13,7 +13,7 @@ export default function ProductCardCartControl({ productId, stockQuantity }: Pro
   const [localLoading, setLocalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Derive quantity from the SINGLE SOURCE OF TRUTH (CartContext)
+  
   const cartItem = cart?.items.find(item => item.product._id === productId);
   const quantity = cartItem ? cartItem.quantity : 0;
   const isOutOfStock = stockQuantity <= 0;

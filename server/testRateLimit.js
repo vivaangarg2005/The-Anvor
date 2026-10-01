@@ -20,7 +20,7 @@ async function makeRequest() {
     });
 
     req.on('error', error => reject(error));
-    // Provide a dummy phone just to hit the rate limiter before the actual OTP logic triggers if we hit limits
+    
     req.write(JSON.stringify({ phone: '+910000000000', channel: 'SMS', purpose: 'LOGIN' }));
     req.end();
   });

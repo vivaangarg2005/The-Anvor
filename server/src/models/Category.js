@@ -26,7 +26,7 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes
-// (No need to manually index 'slug' here because unique: true already created it)
+
+
 
 module.exports = mongoose.model('Category', categorySchema);

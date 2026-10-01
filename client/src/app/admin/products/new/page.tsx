@@ -11,7 +11,7 @@ export default function NewProductPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const handleSubmit = async (data: any) => {
     setIsLoading(true);
     setError('');

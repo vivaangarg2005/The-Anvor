@@ -58,7 +58,7 @@ const seedDB = async () => {
         sku: 'SB-PRL-003',
         category: getCatId('Shoulder Bags'),
         images: ['https://via.placeholder.com/400x400?text=Pearl+Shoulder+Bag'],
-        stockQuantity: 0, // Specifically testing out-of-stock scenario
+        stockQuantity: 0, 
         isActive: true,
         attributes: { material: 'PU Leather', color: 'Pearl White' }
       },
@@ -253,7 +253,7 @@ const seedDB = async () => {
         sku: 'TB-RST-019',
         category: getCatId('Tote Bags'),
         images: ['https://via.placeholder.com/400x400?text=Rustic+Market+Tote'],
-        stockQuantity: 3, // Low stock
+        stockQuantity: 3, 
         isActive: true,
         attributes: { material: 'Full Grain Leather', color: 'Rustic Brown' }
       },
@@ -289,7 +289,7 @@ const seedDB = async () => {
         sku: 'TB-LAV-022',
         category: getCatId('Tote Bags'),
         images: ['https://via.placeholder.com/400x400?text=Lavender+Woven+Tote'],
-        stockQuantity: 0, // Testing another out-of-stock
+        stockQuantity: 0, 
         isActive: true,
         attributes: { material: 'Woven Vegan Leather', color: 'Lavender' }
       },

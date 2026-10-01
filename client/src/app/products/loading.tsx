@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 md:flex gap-12 animate-pulse">
-      {/* Sidebar Skeleton */}
+      {}
       <div className="hidden md:block w-64 shrink-0 space-y-4">
         <div className="h-6 bg-gray-200 rounded w-24 mb-8"></div>
         <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -9,7 +9,7 @@ export default function Loading() {
         <div className="h-4 bg-gray-200 rounded w-5/6"></div>
       </div>
 
-      {/* Grid Skeleton */}
+      {}
       <div className="flex-1">
         <div className="h-10 bg-gray-200 rounded w-48 mb-2"></div>
         <div className="h-4 bg-gray-200 rounded w-32 mb-8"></div>

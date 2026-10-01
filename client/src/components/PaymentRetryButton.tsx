@@ -6,12 +6,12 @@ import { initiatePayment, verifyPayment } from '../lib/api';
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     Razorpay: any;
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export default function PaymentRetryButton({ order }: { order: any }) {
   const router = useRouter();
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);

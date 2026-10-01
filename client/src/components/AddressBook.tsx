@@ -14,8 +14,8 @@ export default function AddressBook({ selectable, selectedAddressId, onSelectAdd
   const [addresses, setAddresses] = useState<AddressType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Single source of truth for form state
-  // null = idle list, 'add' = add new form, '<address_id>' = edit form for that address
+  
+  
   const [activeForm, setActiveForm] = useState<'add' | string | null>(null);
 
   const fetchAllAddresses = useCallback(async () => {
@@ -36,7 +36,7 @@ export default function AddressBook({ selectable, selectedAddressId, onSelectAdd
   }, [onAddressesLoaded]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     fetchAllAddresses();
   }, [fetchAllAddresses]);
 
@@ -229,7 +229,7 @@ function AddressForm({ initialData, onCancel, onSuccess }: AddressFormProps) {
         await addAddress(formData);
       }
       onSuccess();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Failed to save address.');

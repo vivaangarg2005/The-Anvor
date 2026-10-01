@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Formats an ISO date string to "21 Sept 2026 · 09:04 AM" in IST (Asia/Kolkata).
- */
+
+
+
+
 function formatOrderDateTime(isoString: string): string {
   const date = new Date(isoString);
   const datePart = date.toLocaleDateString('en-IN', {
@@ -36,11 +36,11 @@ function formatOrderDateTime(isoString: string): string {
   return `${datePart} · ${timePart.toUpperCase()}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function OrderCard({ order }: { order: any }) {
-  // Show up to 3 product thumbnails from order item snapshots
+  
   const thumbnails: string[] = order.items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     .map((item: any) => item.productImage)
     .filter(Boolean)
     .slice(0, 3);
@@ -61,7 +61,7 @@ function OrderCard({ order }: { order: any }) {
       className="group block border border-stone-200 hover:border-stone-400 transition-colors"
     >
       <div className="p-5 flex items-center gap-5">
-        {/* Product Thumbnails */}
+        {}
         {thumbnails.length > 0 && (
           <div className="flex items-center gap-1 shrink-0">
             {thumbnails.map((src, i) => (
@@ -69,7 +69,7 @@ function OrderCard({ order }: { order: any }) {
                 key={i}
                 className="w-12 h-16 bg-stone-100 overflow-hidden shrink-0"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {}
                 <img
                   src={src}
                   alt=""
@@ -86,7 +86,7 @@ function OrderCard({ order }: { order: any }) {
           </div>
         )}
 
-        {/* Order Info */}
+        {}
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <p className="text-sm font-bold text-stone-900 truncate group-hover:opacity-70 transition-opacity">
             {order.orderNumber}
@@ -99,7 +99,7 @@ function OrderCard({ order }: { order: any }) {
           </p>
         </div>
 
-        {/* Right: Amount + Status + Arrow */}
+        {}
         <div className="flex flex-col items-end gap-2 shrink-0">
           <p className="text-sm font-medium text-stone-900">₹{order.grandTotal}</p>
           <span className={`inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${paymentBadgeClass}`}>
@@ -107,7 +107,7 @@ function OrderCard({ order }: { order: any }) {
           </span>
         </div>
 
-        {/* Arrow */}
+        {}
         <svg
           className="w-4 h-4 text-stone-400 group-hover:text-stone-900 transition-colors shrink-0"
           fill="none"
@@ -121,10 +121,10 @@ function OrderCard({ order }: { order: any }) {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+
 
 export default async function AccountPage() {
-  // Forward cookie to Express to authenticate the request
+  
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
@@ -148,7 +148,7 @@ export default async function AccountPage() {
 
   return (
     <div className="bg-background min-h-screen pb-24">
-      {/* Editorial Header */}
+      {}
       <div className="pt-24 pb-16 px-6 text-center max-w-4xl mx-auto border-b border-stone-200 mb-16">
         <h1 className="text-4xl md:text-5xl font-serif text-stone-900 mb-4 tracking-tight">
           My Account
@@ -161,12 +161,12 @@ export default async function AccountPage() {
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-12">
           
-          {/* Left Column: Profile */}
+          {}
           <div className="md:col-span-5 flex flex-col gap-12 min-w-0 w-full overflow-hidden">
             <section>
               <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 pb-2 border-b border-stone-200">Profile</h2>
               
-              {/* Avatar */}
+              {}
               <div className="flex justify-center mb-8">
                 <ProfilePhotoUploader
                   initialUrl={user.profileImageUrl ?? null}
@@ -203,7 +203,7 @@ export default async function AccountPage() {
             </section>
           </div>
 
-          {/* Right Column: Other Sections */}
+          {}
           <div className="md:col-span-7 flex flex-col gap-12 min-w-0 w-full overflow-hidden">
             
             <section>
@@ -217,7 +217,7 @@ export default async function AccountPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {}
                   {orders.map((order: any) => (
                     <OrderCard key={order._id} order={order} />
                   ))}

@@ -22,7 +22,7 @@ async function captureScreenshots() {
     { name: 'products', url: '/products' },
     { name: 'product_detail', url: '/products/sovereign-tote' },
     { name: 'login', url: '/login' },
-    { name: 'account', url: '/account' } // Might redirect to login, but we'll capture it
+    { name: 'account', url: '/account' } 
   ];
 
   for (const [device, viewport] of Object.entries(viewports)) {
@@ -31,13 +31,13 @@ async function captureScreenshots() {
     for (const p of pages) {
       console.log(`Capturing ${device} - ${p.name}...`);
       await page.goto(`${baseUrl}${p.url}`, { waitUntil: 'networkidle0' });
-      // If mobile and home, open the navigation menu
+      
       if (device === 'mobile' && p.name === 'home') {
         try {
           const menuBtn = await page.$('button[aria-label="Toggle menu"]');
           if (menuBtn) {
             await menuBtn.click();
-            await new Promise(r => setTimeout(r, 1000)); // wait for animation
+            await new Promise(r => setTimeout(r, 1000)); 
             await page.screenshot({ path: `${dir}/${device}_nav_open.png`, fullPage: true });
           }
         } catch (e) {

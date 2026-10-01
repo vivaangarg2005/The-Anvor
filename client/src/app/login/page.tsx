@@ -27,7 +27,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Form fields
+  
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -38,7 +38,7 @@ function LoginContent() {
 
   const clearMessages = () => { setError(''); setSuccessMessage(''); };
 
-  // ── Password Login ──
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
@@ -59,7 +59,7 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
-  // ── Registration ──
+  
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
@@ -81,7 +81,7 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
-  // ── OTP Request ──
+  
   const handleOtpRequest = async (channel: 'WHATSAPP' | 'SMS') => {
     clearMessages();
     if (!phone) { setError('Phone number is required.'); return; }
@@ -99,7 +99,7 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
-  // ── OTP Verify ──
+  
   const handleOtpVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
@@ -120,7 +120,7 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
-  // ── Google Auth ──
+  
   const handleGoogleSuccess = async (credentialResponse: any) => {
     clearMessages();
     setLoading(true);
@@ -184,7 +184,7 @@ function LoginContent() {
     finally { setLoading(false); }
   };
 
-  // ── Shared Styles ──
+  
   const inputClass = "w-full px-0 py-3 rounded-none border-0 border-b border-stone-300 bg-transparent text-stone-900 placeholder:text-stone-300 focus:outline-none focus:border-stone-900 focus:ring-0 transition-colors text-base";
   const primaryBtn = "w-full py-4 bg-stone-900 text-white text-xs font-semibold tracking-widest uppercase hover:bg-stone-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4";
   const secondaryBtn = "w-full py-4 border border-stone-300 text-stone-900 text-xs font-semibold tracking-widest uppercase hover:border-stone-900 transition-colors disabled:opacity-50";
@@ -192,7 +192,7 @@ function LoginContent() {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-6 py-16 bg-background">
       <div className="w-full max-w-sm">
-        {/* Brand */}
+        {}
         <div className="text-center mb-16">
           <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
             <h1 className="text-2xl tracking-[0.25em] text-stone-900 uppercase font-serif">
@@ -201,16 +201,16 @@ function LoginContent() {
           </Link>
         </div>
 
-        {/* Minimal Form Area */}
+        {}
         <div>
 
-          {/* ════════ LOGIN VIEW ════════ */}
+          {}
           {view === 'login' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Welcome Back</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Sign in to your account</p>
 
-              {/* Google Login removed for presentation */}
+              {}
 
 
               <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
@@ -228,14 +228,14 @@ function LoginContent() {
                 </button>
               </form>
 
-              {/* Divider */}
+              {}
               <div className="flex items-center gap-4 my-10">
                 <div className="flex-1 h-px bg-stone-200"></div>
                 <span className="text-[10px] text-stone-400 font-medium uppercase tracking-[0.2em]">Or use OTP</span>
                 <div className="flex-1 h-px bg-stone-200"></div>
               </div>
 
-              {/* OTP Buttons */}
+              {}
               <div className="space-y-4">
                 <button onClick={() => { clearMessages(); setView('otp-request'); setOtpChannel('WHATSAPP'); }} className={secondaryBtn}>
                   WhatsApp OTP
@@ -253,13 +253,13 @@ function LoginContent() {
             </>
           )}
 
-          {/* ════════ REGISTER VIEW ════════ */}
+          {}
           {view === 'register' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Create Account</h2>
               <p className="text-xs text-stone-500 mb-10 text-center uppercase tracking-widest">Join The Anvor</p>
 
-              {/* Google Login removed for presentation */}
+              {}
 
 
               <form onSubmit={handleRegister} className="space-y-6">
@@ -293,7 +293,7 @@ function LoginContent() {
             </>
           )}
 
-          {/* ════════ OTP REQUEST VIEW ════════ */}
+          {}
           {view === 'otp-request' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Sign in with OTP</h2>
@@ -320,7 +320,7 @@ function LoginContent() {
             </>
           )}
 
-          {/* ════════ OTP VERIFY VIEW ════════ */}
+          {}
           {view === 'otp-verify' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Verify Number</h2>
@@ -370,7 +370,7 @@ function LoginContent() {
             </>
           )}
 
-          {/* ════════ GOOGLE PHONE ONBOARDING ════════ */}
+          {}
           {view === 'google-phone-request' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Almost There!</h2>
@@ -403,7 +403,7 @@ function LoginContent() {
             </>
           )}
 
-          {/* ════════ GOOGLE PHONE OTP VERIFY ════════ */}
+          {}
           {view === 'google-phone-verify' && (
             <>
               <h2 className="text-3xl font-serif text-stone-900 mb-2 text-center tracking-tight">Verify Number</h2>
@@ -454,7 +454,7 @@ function LoginContent() {
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <p className="text-center text-[10px] text-stone-400 mt-16 uppercase tracking-widest">
           Secure Login &bull; The Anvor
         </p>

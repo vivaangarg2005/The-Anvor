@@ -1,4 +1,4 @@
-// Update images for the 6 older products that weren't in the first batch
+
 const imageMap = {
   'anvor-sovereign-tote': 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&h=1000&fit=crop&q=80',
   'royal-heritage-satchel': 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&h=1000&fit=crop&q=80',

@@ -1,8 +1,8 @@
-// Update all 26 products with local image URLs
-// 15 unique images, remaining 11 reuse from matching categories
+
+
 
 const imageMap = {
-  // 13 generated + 2 downloaded = 15 unique
+  
   'anvor-sovereign-tote':       '/products/anvor-sovereign-tote.png',
   'royal-heritage-satchel':     '/products/royal-heritage-satchel.png',
   'elysian-chain-shoulder-bag': '/products/elysian-chain-shoulder-bag.png',
@@ -19,18 +19,18 @@ const imageMap = {
   'burgundy-structured-handbag':'/products/burgundy-structured-handbag.png',
   'sky-blue-mini-shoulder-bag': '/products/sky-blue-mini-shoulder-bag.png',
 
-  // Remaining 11 — reuse closest matching image
-  'charcoal-grey-carryall':     '/products/anvor-sovereign-tote.png',       // dark tote
-  'taupe-suede-handbag':        '/products/royal-heritage-satchel.png',     // tan/brown handbag
-  'rose-gold-chain-bag':        '/products/elysian-chain-shoulder-bag.png', // chain shoulder bag
-  'ivory-summer-tote':          '/products/monochrome-canvas-tote.png',     // light tote
-  'aubergine-hobo-bag':         '/products/burgundy-structured-handbag.png',// deep color handbag
-  'teal-envelope-shoulder-bag': '/products/monarch-crossbody-bag.png',      // shoulder/crossbody
-  'rustic-brown-market-tote':   '/products/vanguard-carryall-tote.png',     // leather tote
-  'silver-metallic-clutch':     '/products/aurelia-evening-minaudiere.png',  // evening/clutch
-  'midnight-blue-doctor-bag':   '/products/crimson-leather-satchel.png',    // structured bag
-  'lavender-woven-tote':        '/products/olive-green-work-tote.png',      // tote
-  'cognac-saddle-bag':          '/products/mustard-yellow-slouch-bag.png',   // warm tone shoulder
+  
+  'charcoal-grey-carryall':     '/products/anvor-sovereign-tote.png',       
+  'taupe-suede-handbag':        '/products/royal-heritage-satchel.png',     
+  'rose-gold-chain-bag':        '/products/elysian-chain-shoulder-bag.png', 
+  'ivory-summer-tote':          '/products/monochrome-canvas-tote.png',     
+  'aubergine-hobo-bag':         '/products/burgundy-structured-handbag.png',
+  'teal-envelope-shoulder-bag': '/products/monarch-crossbody-bag.png',      
+  'rustic-brown-market-tote':   '/products/vanguard-carryall-tote.png',     
+  'silver-metallic-clutch':     '/products/aurelia-evening-minaudiere.png',  
+  'midnight-blue-doctor-bag':   '/products/crimson-leather-satchel.png',    
+  'lavender-woven-tote':        '/products/olive-green-work-tote.png',      
+  'cognac-saddle-bag':          '/products/mustard-yellow-slouch-bag.png',   
 };
 
 async function updateAllImages() {

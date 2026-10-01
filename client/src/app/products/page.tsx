@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Browse our curated catalog of elegant accessories.',
 };
 
-// Force dynamic so search params are always read fresh
+
 export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage({
@@ -20,7 +20,7 @@ export default async function ProductsPage({
   const currentCategory = resolvedParams.category;
   const currentPage = parseInt(resolvedParams.page || '1', 10);
 
-  // Fetch products and categories concurrently
+  
   const [productsRes, categoriesRes] = await Promise.all([
     getProducts({ category: currentCategory, page: currentPage, limit: 12 }),
     getCategories()
@@ -32,13 +32,13 @@ export default async function ProductsPage({
 
   return (
     <div className="bg-background min-h-screen pb-24">
-      {/* Editorial Header */}
+      {}
       <div className="pt-24 pb-16 px-6 text-center max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-serif text-stone-900 mb-8 tracking-tight capitalize">
           {currentCategory ? currentCategory.replace('-', ' ') : 'The Collection'}
         </h1>
         
-        {/* Horizontal Category Navigation */}
+        {}
         <nav className="flex flex-wrap justify-center gap-8 mb-6">
           <Link 
             href="/products"
@@ -47,7 +47,7 @@ export default async function ProductsPage({
             All
             {!currentCategory && <span className="absolute bottom-0 left-0 w-full h-px bg-stone-900"></span>}
           </Link>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {}
           {categories.map((cat: any) => (
             <Link
               key={cat._id}
@@ -76,12 +76,12 @@ export default async function ProductsPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {}
             {products.map((product: any) => (
               <Link key={product._id} href={`/products/${product.slug}`} className="group block">
                 <div className="flex flex-col h-full">
                   <div className="aspect-4/5 bg-stone-100 relative overflow-hidden mb-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {}
                     <img 
                       src={product.images?.[0] || 'https://via.placeholder.com/400x500?text=No+Image'} 
                       alt={product.name} 
@@ -118,7 +118,7 @@ export default async function ProductsPage({
             </div>
           )}
 
-        {/* Pagination Foundation */}
+        {}
         {pagination && pagination.totalPages > 1 && (
           <div className="mt-24 flex justify-center gap-2">
             {Array.from({ length: pagination.totalPages }).map((_, i) => {

@@ -19,7 +19,7 @@ export default function AdminOrderDetailPage() {
 
   useEffect(() => {
     loadOrder();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [id]);
 
   const loadOrder = async () => {
@@ -84,10 +84,10 @@ export default function AdminOrderDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column: Order Details & Items */}
+        {}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Header Info */}
+          {}
           <div className="bg-white border border-stone-200 p-6 shadow-sm">
             <h1 className="text-2xl font-serif text-stone-900 mb-2">Order {order.orderNumber}</h1>
             <p className="text-sm text-stone-500">
@@ -95,7 +95,7 @@ export default function AdminOrderDetailPage() {
             </p>
           </div>
 
-          {/* Items Snapshot */}
+          {}
           <div className="bg-white border border-stone-200 p-6 shadow-sm">
             <h2 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6">Historical Item Snapshot</h2>
             <div className="space-y-6">
@@ -120,7 +120,7 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
           
-          {/* Totals */}
+          {}
           <div className="bg-white border border-stone-200 p-6 shadow-sm flex flex-col items-end">
              <div className="w-full sm:w-1/2 space-y-3">
                <div className="flex justify-between text-sm text-stone-600">
@@ -145,13 +145,13 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
 
-        {/* Right Column: Status & Customer */}
+        {}
         <div className="space-y-8">
           
-          {/* Status Controls */}
+          {}
           <div className="bg-white border border-stone-200 p-6 shadow-sm space-y-6">
             
-            {/* Read-only Payment Status */}
+            {}
             <div>
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-3">Payment Status</h3>
               <span className={`inline-flex items-center px-3 py-1 text-[10px] uppercase tracking-widest font-bold ${
@@ -166,7 +166,7 @@ export default function AdminOrderDetailPage() {
 
             <hr className="border-stone-100" />
 
-            {/* Operational Status Control */}
+            {}
             <div>
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-3">Fulfillment Status</h3>
               <div className="flex flex-col gap-3">
@@ -196,7 +196,7 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
 
-          {/* Customer & Shipping */}
+          {}
           <div className="bg-white border border-stone-200 p-6 shadow-sm space-y-6">
             <div>
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-3">Customer Info</h3>

@@ -1,14 +1,14 @@
-/**
- * authController.js
- * Thin HTTP layer. Extracts request data, calls authService, sets cookies.
- */
+
+
+
+
 
 const authService = require('../services/authService');
 const authConfig = require('../config/authConfig');
 
-/**
- * Helper: sets the HttpOnly JWT cookie on the response.
- */
+
+
+
 const setTokenCookie = (res, token) => {
   res.cookie(authConfig.cookie.name, token, {
     httpOnly: authConfig.cookie.httpOnly,

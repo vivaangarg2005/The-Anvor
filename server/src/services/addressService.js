@@ -29,26 +29,26 @@ const validateAddressData = (data) => {
   }
 };
 
-/**
- * Get all addresses for a user
- */
+
+
+
 const getAddresses = async (userId) => {
   return Address.find({ user: userId }).sort({ isDefault: -1, createdAt: -1 });
 };
 
-/**
- * Create a new address for a user
- */
+
+
+
 const createAddress = async (userId, data) => {
   validateAddressData(data);
 
   const addressCount = await Address.countDocuments({ user: userId });
   
-  // If this is the first address, make it default automatically
+  
   const isDefault = data.isDefault || addressCount === 0;
 
   if (isDefault && addressCount > 0) {
-    // Unset any existing default
+    
     await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
   }
 
@@ -61,9 +61,9 @@ const createAddress = async (userId, data) => {
   return address.save();
 };
 
-/**
- * Update an existing address
- */
+
+
+
 const updateAddress = async (userId, addressId, data) => {
   validateAddressData(data);
 
@@ -72,7 +72,7 @@ const updateAddress = async (userId, addressId, data) => {
     throw new Error('Address not found');
   }
 
-  // If setting this address to default, unset others
+  
   if (data.isDefault && !address.isDefault) {
     await Address.updateMany(
       { user: userId, _id: { $ne: addressId } },
@@ -80,14 +80,14 @@ const updateAddress = async (userId, addressId, data) => {
     );
   }
 
-  // Update fields
+  
   Object.assign(address, data);
   return address.save();
 };
 
-/**
- * Delete an address
- */
+
+
+
 const deleteAddress = async (userId, addressId) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
@@ -97,7 +97,7 @@ const deleteAddress = async (userId, addressId) => {
   const wasDefault = address.isDefault;
   await address.deleteOne();
 
-  // If we deleted the default address, and there are other addresses, make the most recent one default
+  
   if (wasDefault) {
     const latestAddress = await Address.findOne({ user: userId }).sort({ createdAt: -1 });
     if (latestAddress) {
@@ -109,9 +109,9 @@ const deleteAddress = async (userId, addressId) => {
   return true;
 };
 
-/**
- * Set an address as default
- */
+
+
+
 const setDefaultAddress = async (userId, addressId) => {
   const address = await Address.findOne({ _id: addressId, user: userId });
   if (!address) {
@@ -119,10 +119,10 @@ const setDefaultAddress = async (userId, addressId) => {
   }
 
   if (address.isDefault) {
-    return address; // Already default
+    return address; 
   }
 
-  // Unset previous defaults
+  
   await Address.updateMany(
     { user: userId, _id: { $ne: addressId } },
     { $set: { isDefault: false } }

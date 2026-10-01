@@ -3,7 +3,7 @@ const router = express.Router();
 const addressController = require('../controllers/addressController');
 const { requireAuth } = require('../middleware/authMiddleware');
 
-router.use(requireAuth); // All address routes require authentication
+router.use(requireAuth); 
 
 router.get('/', addressController.getAddresses);
 router.post('/', addressController.createAddress);

@@ -25,7 +25,7 @@ exports.updateCategory = async (id, data) => {
   if (data.name && !data.slug) {
     data.slug = slugify(data.name);
   }
-  // { new: true } returns the updated document. { runValidators: true } ensures constraints.
+  
   const category = await Category.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!category) {
     throw Object.assign(new Error('Category not found'), { statusCode: 404 });

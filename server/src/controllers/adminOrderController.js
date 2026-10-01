@@ -57,7 +57,7 @@ exports.updateAdminOrderStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     
-    // Explicitly validate against the allowed enum values from the model
+    
     const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
     
     if (!status || !allowedStatuses.includes(status)) {
@@ -67,7 +67,7 @@ exports.updateAdminOrderStatus = async (req, res, next) => {
       });
     }
 
-    // Only update the operational status field, ignore paymentStatus or other fields
+    
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { $set: { status } },

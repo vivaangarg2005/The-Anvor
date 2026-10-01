@@ -14,7 +14,7 @@ exports.getCategory = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// [TEMPORARY UNPROTECTED DEVELOPMENT ENDPOINT]
+
 exports.createCategory = async (req, res, next) => {
   try {
     const category = await categoryService.createCategory(req.body);
@@ -22,7 +22,7 @@ exports.createCategory = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// [TEMPORARY UNPROTECTED DEVELOPMENT ENDPOINT]
+
 exports.updateCategory = async (req, res, next) => {
   try {
     const category = await categoryService.updateCategory(req.params.id, req.body);
@@ -30,7 +30,7 @@ exports.updateCategory = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// [TEMPORARY UNPROTECTED DEVELOPMENT ENDPOINT]
+
 exports.deleteCategory = async (req, res, next) => {
   try {
     await categoryService.deleteCategory(req.params.id);

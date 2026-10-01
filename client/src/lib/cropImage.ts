@@ -3,7 +3,7 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues on CodeSandbox
+    image.setAttribute('crossOrigin', 'anonymous'); 
     image.src = url;
   });
 
@@ -11,9 +11,9 @@ export function getRadianAngle(degreeValue: number) {
   return (degreeValue * Math.PI) / 180;
 }
 
-/**
- * Returns the new bounding area of a rotated rectangle.
- */
+
+
+
 export function rotateSize(width: number, height: number, rotation: number) {
   const rotRad = getRadianAngle(rotation);
 
@@ -25,9 +25,9 @@ export function rotateSize(width: number, height: number, rotation: number) {
   };
 }
 
-/**
- * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
- */
+
+
+
 export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: { x: number; y: number; width: number; height: number },
@@ -44,24 +44,24 @@ export default async function getCroppedImg(
 
   const rotRad = getRadianAngle(rotation);
 
-  // calculate bounding box of the rotated image
+  
   const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
     image.width,
     image.height,
     rotation
   );
 
-  // set canvas size to match the bounding box
+  
   canvas.width = bBoxWidth;
   canvas.height = bBoxHeight;
 
-  // translate canvas context to a central location to allow rotating and flipping around the center
+  
   ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
   ctx.rotate(rotRad);
   ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
   ctx.translate(-image.width / 2, -image.height / 2);
 
-  // draw rotated image
+  
   ctx.drawImage(image, 0, 0);
 
   const croppedCanvas = document.createElement('canvas');
@@ -71,7 +71,7 @@ export default async function getCroppedImg(
     return null;
   }
 
-  // Set the size of the cropped canvas (max 512x512 px for avatar display)
+  
   const MAX_DIMENSION = 512;
   const maxCropDim = Math.max(pixelCrop.width, pixelCrop.height);
   const scale = maxCropDim > MAX_DIMENSION ? MAX_DIMENSION / maxCropDim : 1;
@@ -81,11 +81,11 @@ export default async function getCroppedImg(
   croppedCanvas.width = targetWidth;
   croppedCanvas.height = targetHeight;
 
-  // High quality image smoothing
+  
   croppedCtx.imageSmoothingEnabled = true;
   croppedCtx.imageSmoothingQuality = 'high';
 
-  // Draw the cropped image onto the new canvas
+  
   croppedCtx.drawImage(
     canvas,
     pixelCrop.x,
@@ -98,7 +98,7 @@ export default async function getCroppedImg(
     targetHeight
   );
 
-  // Output as optimized JPEG blob with 0.85 quality
+  
   return new Promise((resolve) => {
     croppedCanvas.toBlob((blob) => {
       if (!blob) {

@@ -7,12 +7,12 @@ import { initiatePayment, verifyPayment } from '../../../lib/api';
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     Razorpay: any;
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export default function OrderSuccessClient({ order: initialOrder }: { order: any }) {
   const router = useRouter();
   const [order, setOrder] = useState(initialOrder);
@@ -24,14 +24,14 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
     setIsPaymentLoading(true);
 
     try {
-      // Step 1: Backend creates/reuses a Razorpay order, returns safe public data
+      
       const paymentData = await initiatePayment(order._id);
       const { razorpayOrderId, amount, currency, keyId } = paymentData.data;
 
-      // Step 2: Load Razorpay Checkout script dynamically if not already present
+      
       await loadRazorpayScript();
 
-      // Step 3: Open Razorpay Checkout — secret key NEVER used here, only keyId
+      
       const razorpayOptions = {
         key: keyId,
         amount,
@@ -44,7 +44,7 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
           razorpay_payment_id: string;
           razorpay_signature: string;
         }) => {
-          // Step 4: Payment completed — send to backend for cryptographic verification
+          
           setIsPaymentLoading(true);
           try {
             const verifyResult = await verifyPayment(order._id, {
@@ -54,9 +54,9 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             });
 
             if (verifyResult.success && verifyResult.data.paymentStatus === 'PAID') {
-              // Update local state to reflect PAID without a full reload
+              
               setOrder({ ...order, paymentStatus: 'PAID', status: 'PROCESSING' });
-              // Force Next.js router to drop stale cache for this order
+              
               router.refresh();
             } else {
               setPaymentError('Payment verification failed. Please contact support.');
@@ -68,16 +68,16 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
           }
         },
         prefill: {
-          // Pass contact details from the order's shipping address snapshot
+          
           name: order.shippingAddress?.recipientName || '',
           contact: order.shippingAddress?.phone || '',
         },
         theme: {
-          color: '#1c1917', // stone-900
+          color: '#1c1917', 
         },
         modal: {
           ondismiss: () => {
-            // User closed checkout — do NOT mark as failed, allow retry
+            
             setIsPaymentLoading(false);
           },
         },
@@ -102,13 +102,13 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
 
   return (
     <>
-      {/* Razorpay Checkout script — loaded once on demand */}
+      {}
       <script src="https://checkout.razorpay.com/v1/checkout.js" async />
 
       <div className="bg-background min-h-[70vh] flex flex-col items-center justify-center px-6 py-24">
         <div className="max-w-md w-full text-center space-y-8">
 
-          {/* Checkmark */}
+          {}
           <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-8 ${isPaid ? 'bg-stone-900' : 'bg-stone-200'}`}>
             {isPaid ? (
               <svg className="w-8 h-8 text-stone-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,7 +122,7 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             )}
           </div>
 
-          {/* Heading */}
+          {}
           <div>
             <h1 className="text-3xl font-serif text-stone-900 mb-4">
               {isPaid ? 'Your order is placed successfully' : 'Order created — Payment pending'}
@@ -134,7 +134,7 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             </p>
           </div>
 
-          {/* Order summary card */}
+          {}
           <div className="bg-stone-50 border border-stone-200 p-6 space-y-4 text-left">
             <div className="flex justify-between items-center text-sm">
               <span className="text-stone-500 uppercase tracking-widest text-[10px] font-bold">Order Number</span>
@@ -158,14 +158,14 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             )}
           </div>
 
-          {/* Error */}
+          {}
           {paymentError && (
             <div className="text-[10px] text-red-600 bg-red-50 border border-red-200 p-3">
               {paymentError}
             </div>
           )}
 
-          {/* Actions */}
+          {}
           <div className="flex flex-col gap-4 pt-4">
             {!isPaid && (
               <button
@@ -195,7 +195,7 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
   );
 }
 
-// Dynamically loads the Razorpay checkout script once
+
 function loadRazorpayScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (window.Razorpay) return resolve();

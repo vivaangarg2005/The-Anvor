@@ -11,13 +11,13 @@ const runConcurrencyTest = async () => {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB for Concurrency Tests...');
     
-    const phone = '+919999999999'; // test phone
+    const phone = '+919999999999'; 
     const purpose = 'LOGIN';
     const channel = 'SMS';
     
     await OtpRecord.deleteMany({ phone });
 
-    // Mock message provider
+    
     const messageProvider = require('./src/providers/messageProvider');
     let capturedOtp = null;
     messageProvider.sendMessage = async ({ otp }) => { capturedOtp = otp; };
@@ -25,7 +25,7 @@ const runConcurrencyTest = async () => {
     await otpService.requestOtp({ phone, channel, purpose });
     console.log('OTP Requested. Captured OTP:', capturedOtp);
 
-    // Attempt concurrent verifications
+    
     console.log('Launching 5 concurrent verification requests...');
     const promises = [];
     for (let i = 0; i < 5; i++) {

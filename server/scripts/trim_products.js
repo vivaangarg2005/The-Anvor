@@ -1,4 +1,4 @@
-// Delete extra products, keeping only the 15 with unique images
+
 const slugsToDelete = [
   'charcoal-grey-carryall',
   'taupe-suede-handbag',
@@ -38,7 +38,7 @@ async function trimProducts() {
       }
     }
 
-    // Verify final count
+    
     const verifyRes = await fetch('http://localhost:5000/api/products?limit=100', {
       headers: { 'Origin': 'http://localhost:3000' }
     });

@@ -12,7 +12,7 @@ const Address = require('./src/models/Address');
 const Order = require('./src/models/Order');
 const jwt = require('jsonwebtoken');
 
-// Helper to generate JWT token for mocking auth
+
 const generateToken = (userId, role = 'CUSTOMER') => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET || 'secret123', { expiresIn: '1h' });
 };
@@ -24,7 +24,7 @@ const runTests = async () => {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB for Order Tests...');
 
-    // Setup Test Data
+    
     let userA = await User.findOne({ phone: '+91000000000A' });
     if (!userA) userA = await User.create({ phone: '+91000000000A', name: 'Order Test User A', passwordHash: 'test' });
     
@@ -34,7 +34,7 @@ const runTests = async () => {
     let category = await Category.findOne({ slug: 'test-category' });
     if (!category) category = await Category.create({ name: 'Test Category', slug: 'test-category', description: 'Test' });
 
-    // Clean up previous test products/addresses/orders for clean slate
+    
     await Product.deleteMany({ sku: { $in: ['TEST-ORDER-1', 'TEST-ORDER-2'] } });
     await Address.deleteMany({ user: { $in: [userA._id, userB._id] } });
     await Order.deleteMany({ user: { $in: [userA._id, userB._id] } });
@@ -49,7 +49,7 @@ const runTests = async () => {
     const productB = await Product.create({
       name: 'Order Test Product 2', slug: 'order-test-2', description: 'Test',
       price: 200, sku: 'TEST-ORDER-2', category: category._id, images: ['test2.jpg'],
-      stockQuantity: 5, isActive: false // Notice this is INACTIVE
+      stockQuantity: 5, isActive: false 
     });
 
     const addressA = await Address.create({
@@ -62,18 +62,18 @@ const runTests = async () => {
 
     console.log('--- STARTING ORDER TESTS ---');
 
-    // 1. Auth required to create order
+    
     console.log('Test 1: Auth required to create order');
     let res = await request(app).post('/api/orders').set('Origin', 'http://localhost:3000').send({ addressId: addressA._id, idempotencyKey: 'key1' });
     if (res.status !== 401) throw new Error(`Expected 401 Unauthorized for unauthenticated order creation, got ${res.status}: ${JSON.stringify(res.body)}`);
 
-    // Setup Cart for User A
+    
     await Cart.create({
       user: userA._id,
-      items: [{ product: productA._id, quantity: 2 }] // 2 * 100 = 200
+      items: [{ product: productA._id, quantity: 2 }] 
     });
 
-    // 14. Invalid/nonexistent product prevents order creation (Using Product B which is inactive)
+    
     console.log('Test 14, 15: Inactive/unpurchasable product prevents order creation');
     await Cart.updateOne({ user: userA._id }, { $push: { items: { product: productB._id, quantity: 1 } } });
     res = await request(app)
@@ -85,15 +85,15 @@ const runTests = async () => {
       throw new Error(`Inactive product should prevent order creation, got status ${res.status} body ${JSON.stringify(res.body)}`);
     }
     
-    // 13. Failed order does NOT clear the cart
+    
     console.log('Test 13: Failed order does NOT clear the cart');
     let cartA = await Cart.findOne({ user: userA._id });
     if (cartA.items.length !== 2) throw new Error('Cart should not be cleared on failure');
 
-    // Fix cart for User A
+    
     await Cart.updateOne({ user: userA._id }, { $set: { items: [{ product: productA._id, quantity: 2 }] } });
 
-    // 8. Address must belong to current user
+    
     console.log('Test 8, 9: User A cannot create an order using User B\'s address');
     const addressB = await Address.create({
       user: userB._id, recipientName: 'User B', phone: '321', addressLine1: 'Line 1B',
@@ -106,8 +106,8 @@ const runTests = async () => {
       .send({ addressId: addressB._id, idempotencyKey: 'key3' });
     if (res.status !== 404) throw new Error('User A should not be able to use User B address');
 
-    // 2. Authenticated user can create order (Successful case)
-    // 6. Client cannot manipulate subtotal (by sending dummy totals)
+    
+    
     console.log('Test 2, 4, 5, 6, 7: Order Creation + Server Pricing + Snapshots');
     const idempotencyKeySuccess = 'success-key-1';
     res = await request(app)
@@ -117,15 +117,15 @@ const runTests = async () => {
       .send({ 
         addressId: addressA._id, 
         idempotencyKey: idempotencyKeySuccess,
-        subtotal: 9999, // Attempt to manipulate price
-        items: [{ product: productA._id, unitPrice: 1, lineTotal: 1 }] // Attempt to manipulate items
+        subtotal: 9999, 
+        items: [{ product: productA._id, unitPrice: 1, lineTotal: 1 }] 
       });
     
     if (res.status !== 201) throw new Error(`Order creation failed: ${JSON.stringify(res.body)}`);
     const orderId = res.body.data._id;
     const orderNumber = res.body.data.orderNumber;
     
-    // 3, 4, 18. Correct snapshot stored and calculated by server
+    
     const createdOrder = await Order.findById(orderId);
     if (createdOrder.subtotal !== 200 || createdOrder.grandTotal !== 200) {
       throw new Error('Server did not authoritative price calculate correctly');
@@ -137,18 +137,18 @@ const runTests = async () => {
       throw new Error('Address snapshot was not stored correctly');
     }
 
-    // 12. Successful order clears the correct user's cart
+    
     console.log('Test 12: Successful order clears the correct user\'s cart');
     cartA = await Cart.findOne({ user: userA._id });
     if (cartA.items.length !== 0) throw new Error('Cart was not cleared after successful order');
 
-    // 16, 17. Statuses start correctly
+    
     console.log('Test 16, 17: Statuses start correctly');
     if (createdOrder.status !== 'PENDING' || createdOrder.paymentStatus !== 'PENDING') {
       throw new Error('Order/Payment status did not start at PENDING');
     }
 
-    // 21. Repeated request with the same idempotency key does not create duplicate orders.
+    
     console.log('Test 21: Repeated request with same idempotency key');
     const resRepeat = await request(app)
       .post('/api/orders')
@@ -159,20 +159,20 @@ const runTests = async () => {
       throw new Error('Idempotent request did not return existing order');
     }
     
-    // Check cart is still empty (wasn't incorrectly refilled/errored)
+    
     cartA = await Cart.findOne({ user: userA._id });
     if (cartA.items.length !== 0) throw new Error('Cart should remain empty on repeated idempotent request');
 
-    // 10. User A cannot GET User B's order (via list)
+    
     console.log('Test 10, 11: Cross-user order access prevention');
     let resB = await request(app).get('/api/orders').set('Origin', 'http://localhost:3000').set('Authorization', `Bearer ${tokenB}`);
     if (resB.body.data.length !== 0) throw new Error('User B should not see User A orders');
 
-    // 11. User A cannot GET User B's order by ID
+    
     resB = await request(app).get(`/api/orders/${orderId}`).set('Origin', 'http://localhost:3000').set('Authorization', `Bearer ${tokenB}`);
     if (resB.status !== 403) throw new Error('User B should be blocked from GET order by ID');
 
-    // 23. User A's idempotency key reused by User B
+    
     console.log('Test 23: Idempotency key cannot be hijacked by another user');
     resB = await request(app)
       .post('/api/orders')
@@ -181,8 +181,8 @@ const runTests = async () => {
       .send({ addressId: addressB._id, idempotencyKey: idempotencyKeySuccess });
     if (resB.status !== 403) throw new Error('User B should not be able to reuse User A idempotency key');
 
-    // 19. Later address changes do not alter existing order
-    // 20. Later product price changes do not alter existing order
+    
+    
     console.log('Test 19, 20: Snapshot durability against later mutations');
     await Address.updateOne({ _id: addressA._id }, { recipientName: 'User A Modified' });
     await Product.updateOne({ _id: productA._id }, { price: 999 });
@@ -195,19 +195,19 @@ const runTests = async () => {
       throw new Error('Order product snapshot was mutated by product modification');
     }
 
-    // 22. Concurrent duplicate order attempts are handled safely
-    // Since javascript is single threaded and Node's event loop handles concurrency, we can simulate it with Promise.all
+    
+    
     console.log('Test 22: Concurrent requests');
     await Cart.updateOne({ user: userA._id }, { $set: { items: [{ product: productA._id, quantity: 1 }] } });
-    await Product.updateOne({ _id: productA._id }, { price: 100, isActive: true }); // Reset product
+    await Product.updateOne({ _id: productA._id }, { price: 100, isActive: true }); 
     
     const concurrentKey = 'concurrent-key-123';
     const req1 = request(app).post('/api/orders').set('Origin', 'http://localhost:3000').set('Authorization', `Bearer ${tokenA}`).send({ addressId: addressA._id, idempotencyKey: concurrentKey });
     const req2 = request(app).post('/api/orders').set('Origin', 'http://localhost:3000').set('Authorization', `Bearer ${tokenA}`).send({ addressId: addressA._id, idempotencyKey: concurrentKey });
     
     const [res1, res2] = await Promise.all([req1, req2]);
-    // One should be 201 (created), other could be 200 (existing) or 201 depending on timing, 
-    // but total orders created should be exactly 1 for this key.
+    
+    
     const concurrentOrders = await Order.find({ idempotencyKey: concurrentKey });
     if (concurrentOrders.length !== 1) {
       throw new Error(`Concurrent test failed. Expected 1 order, found ${concurrentOrders.length}`);

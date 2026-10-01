@@ -1,8 +1,8 @@
-/**
- * razorpayClient.js
- * Initializes the Razorpay SDK once using environment credentials.
- * The secret never leaves the server process.
- */
+
+
+
+
+
 const Razorpay = require('razorpay');
 
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {

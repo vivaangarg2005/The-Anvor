@@ -21,7 +21,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // ── Auth State for Header ──
+  
   let isLoggedIn = false;
   let userProfileImageUrl: string | null = null;
   let userId: string | null = null;
@@ -44,18 +44,18 @@ export default async function RootLayout({
         <CartProvider>
           <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
             <Header isLoggedIn={isLoggedIn} profileImageUrl={userProfileImageUrl} userId={userId} />
-            {/* Main Content Area */}
+            {}
             <main className="grow">
               {children}
             </main>
           </GoogleOAuthProvider>
 
-          {/* Refined Minimalist Footer */}
+          {}
           <footer className="bg-background border-t border-stone-200 pt-16 pb-8 md:pt-20 md:pb-10 mt-auto">
             <div className="max-w-6xl mx-auto px-6 lg:px-8">
               <div className="flex flex-col md:flex-row gap-16 md:gap-8 justify-between">
                 
-                {/* Brand Area */}
+                {}
                 <div className="md:w-1/3 flex flex-col items-start">
                   <span className="text-xl font-serif tracking-[0.2em] text-stone-900 uppercase mb-4">THE ANVOR</span>
                   <p className="text-sm text-stone-500 max-w-xs leading-relaxed">
@@ -63,7 +63,7 @@ export default async function RootLayout({
                   </p>
                 </div>
 
-                {/* Navigation Grid */}
+                {}
                 <div className="md:w-2/3 lg:w-1/2">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12">
                     <div>

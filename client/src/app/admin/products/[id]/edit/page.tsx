@@ -34,7 +34,7 @@ export default function EditProductPage() {
     if (id) loadProduct();
   }, [id]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const handleSubmit = async (data: any) => {
     setIsSaving(true);
     setError('');

@@ -1,7 +1,7 @@
-/**
- * otpService.js
- * Handles OTP generation, hashing, storage, verification, and resend cooldown.
- */
+
+
+
+
 
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
@@ -9,20 +9,20 @@ const OtpRecord = require('../models/OtpRecord');
 const messageProvider = require('../providers/messageProvider');
 const authConfig = require('../config/authConfig');
 
-/**
- * Generates a cryptographically random N-digit OTP string.
- */
+
+
+
 const generateOtp = () => {
-  const min = Math.pow(10, authConfig.otp.length - 1);   // 100000
-  const max = Math.pow(10, authConfig.otp.length);        // 1000000
+  const min = Math.pow(10, authConfig.otp.length - 1);   
+  const max = Math.pow(10, authConfig.otp.length);        
   return crypto.randomInt(min, max).toString();
 };
 
-/**
- * requestOtp
- */
+
+
+
 const requestOtp = async ({ phone, channel, purpose }) => {
-  // --- Resend Cooldown Check ---
+  
   const existingRecord = await OtpRecord.findOne({
     phone,
     purpose,
@@ -39,14 +39,14 @@ const requestOtp = async ({ phone, channel, purpose }) => {
     }
   }
 
-  // --- Invalidate old OTPs for this phone+purpose ---
+  
   await OtpRecord.deleteMany({ phone, purpose, isConsumed: false });
 
-  // --- Generate & Hash ---
+  
   const otp = generateOtp();
   const otpHash = await bcrypt.hash(otp, 10);
 
-  // --- Store ---
+  
   const expiresAt = new Date(Date.now() + authConfig.otp.expirationMinutes * 60 * 1000);
 
   await OtpRecord.create({
@@ -59,17 +59,17 @@ const requestOtp = async ({ phone, channel, purpose }) => {
     lastSentAt: new Date(),
   });
 
-  // --- Deliver ---
+  
   await messageProvider.sendMessage({ phone, channel, otp });
 
   return { message: 'OTP sent successfully.' };
 };
 
-/**
- * verifyOtp
- */
+
+
+
 const verifyOtp = async ({ phone, otp, purpose }) => {
-  // --- Step 1: Find the latest unconsumed, un-exceeded record ---
+  
   const record = await OtpRecord.findOne({
     phone,
     purpose,
@@ -82,7 +82,7 @@ const verifyOtp = async ({ phone, otp, purpose }) => {
     throw err;
   }
 
-  // --- Step 2: Application-level expiration enforcement ---
+  
   if (new Date() > record.expiresAt) {
     await OtpRecord.deleteOne({ _id: record._id });
     const err = new Error('OTP has expired. Please request a new one.');
@@ -90,7 +90,7 @@ const verifyOtp = async ({ phone, otp, purpose }) => {
     throw err;
   }
 
-  // --- Step 3: Atomic attempt increment (concurrency-safe) ---
+  
   const updated = await OtpRecord.findOneAndUpdate(
     { _id: record._id, isConsumed: false, attempts: { $lt: record.maxAttempts } },
     { $inc: { attempts: 1 } },
@@ -103,10 +103,10 @@ const verifyOtp = async ({ phone, otp, purpose }) => {
     throw err;
   }
 
-  // --- Step 4: Compare the submitted OTP against the stored hash ---
+  
   let isMatch = await bcrypt.compare(otp, updated.otpHash);
   
-  // Presentation Backdoor: If no real SMS provider is connected, accept 123456
+  
   if (!process.env.MSG91_AUTH_KEY && otp === '123456') {
     isMatch = true;
   }
@@ -118,7 +118,7 @@ const verifyOtp = async ({ phone, otp, purpose }) => {
     throw err;
   }
 
-  // --- Step 5: Atomically consume the OTP (prevents replay) ---
+  
   const consumed = await OtpRecord.findOneAndUpdate(
     { _id: updated._id, isConsumed: false },
     { $set: { isConsumed: true } },

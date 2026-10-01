@@ -1,13 +1,13 @@
-/**
- * messageProvider.js
- * Interface for delivering OTPs via different channels (SMS, WhatsApp).
- */
+
+
+
+
 
 class DevelopmentMessageProvider {
-  /**
-   * Logs the OTP to the backend terminal instead of sending a real message.
-   * NEVER returns the OTP to the caller (API response).
-   */
+  
+
+
+
   async sendMessage({ phone, channel, otp }) {
     console.log(`\n=========================================`);
     console.log(`🔒 [DEV MODE OTP]`);
@@ -16,7 +16,7 @@ class DevelopmentMessageProvider {
     console.log(`OTP Code: ${otp}`);
     console.log(`=========================================\n`);
     
-    // Simulate network delay
+    
     await new Promise(resolve => setTimeout(resolve, 500));
     
     return { success: true, messageId: `dev-${Date.now()}` };
@@ -35,7 +35,7 @@ class MSG91MessageProvider {
     if (!this.authKey) {
       throw new Error("CRITICAL CONFIGURATION ERROR: MSG91_AUTH_KEY is missing. OTP delivery is disabled.");
     }
-    // MSG91 typically expects the mobile number without the '+' prefix.
+    
     const mobile = phone.replace('+', '');
 
     if (channel === 'SMS') {
@@ -43,7 +43,7 @@ class MSG91MessageProvider {
         throw new Error("CRITICAL: MSG91_OTP_TEMPLATE_ID is required for SMS delivery.");
       }
 
-      // MSG91 Send OTP API
+      
       const url = `https://control.msg91.com/api/v5/otp?template_id=${this.smsTemplateId}&mobile=${mobile}&authkey=${this.authKey}&otp=${otp}`;
       
       const response = await fetch(url, { method: 'POST' });
@@ -61,7 +61,7 @@ class MSG91MessageProvider {
         throw new Error("CRITICAL: MSG91_WA_NUMBER and MSG91_WA_TEMPLATE_NAME are required for WhatsApp delivery.");
       }
 
-      // MSG91 WhatsApp Outbound Message API
+      
       const url = 'https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/';
       const payload = {
         integrated_number: this.waIntegratedNumber,
@@ -116,11 +116,11 @@ class MSG91MessageProvider {
   }
 }
 
-// Determine which provider to use based on environment
+
 let provider;
 
-// In both development and production, if they have explicitly provided the MSG91 auth key, use it. 
-// Otherwise gracefully fallback to Development mode so it works without keys!
+
+
 if (process.env.MSG91_AUTH_KEY) {
   provider = new MSG91MessageProvider();
 } else {

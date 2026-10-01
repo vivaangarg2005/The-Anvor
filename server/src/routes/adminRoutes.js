@@ -15,10 +15,10 @@ const {
 
 const router = express.Router();
 
-// Enforce Auth and Admin role on all routes in this router
+
 router.use(requireAuth, requireAdmin);
 
-// Admin Product Management
+
 router.route('/products')
   .get(getAdminProducts)
   .post(createProduct);
@@ -27,7 +27,7 @@ router.route('/products/:id')
   .patch(updateProduct)
   .delete(deleteProduct);
 
-// Admin Order Management
+
 router.route('/orders')
   .get(getAdminOrders);
 

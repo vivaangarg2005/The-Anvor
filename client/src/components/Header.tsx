@@ -36,14 +36,14 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
   const [clientUserIdState, setClientUserIdState] = useState(getClientUserId());
   const lastActionTime = useRef<number>(Date.now());
 
-  // If server prop changes after router.refresh(), sync and clear the local event override
+  
   if (profileImageUrl !== prevPropUrl || userId !== currentUserId) {
     setPrevPropUrl(profileImageUrl);
     setCurrentUserId(userId);
     setEventAvatarUrl(undefined);
   }
 
-  // Subscribe to authStore changes (cross-page SPA navigation)
+  
   useEffect(() => {
     const interval = setInterval(() => {
       const storeId = getClientUserId();
@@ -54,16 +54,16 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
     return () => clearInterval(interval);
   }, [clientUserIdState]);
 
-  // Determine effective identity
+  
   const effectiveUserId = clientUserIdState !== null ? clientUserIdState : currentUserId;
   const showStaleFallback = clientUserIdState !== null && clientUserIdState !== currentUserId;
 
-  // Authoritative display URL: instant event override if active, else server prop
-  // If the server prop is stale (e.g. Next.js cache served A when we are B), hide avatar
+  
+  
   const baseAvatarUrl = showStaleFallback ? null : profileImageUrl;
   const avatarUrl = eventAvatarUrl !== undefined ? eventAvatarUrl : baseAvatarUrl;
 
-  // Listen for instant client-side profile photo updates without page reload (SAME TAB ONLY)
+  
   useEffect(() => {
     const handleProfilePhotoUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ url: string | null }>;
@@ -79,9 +79,9 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
     };
   }, []);
 
-  // Close mobile menu on route change
+  
   useEffect(() => {
-    // eslint-disable-next-line
+    
     setIsMobileMenuOpen(false);
   }, [pathname, searchParams]);
 
@@ -108,7 +108,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
     <header className="bg-background/95 backdrop-blur-md sticky top-0 z-50">
       <div className="w-full px-8 md:px-16 h-20 flex items-center justify-between">
         
-        {/* Mobile Left: Menu Toggle */}
+        {}
         <div className="flex items-center md:hidden flex-1">
           <button 
             onClick={toggleMobileMenu}
@@ -125,7 +125,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
           </button>
         </div>
 
-        {/* Desktop Left: Navigation */}
+        {}
         <nav className="hidden md:flex gap-8 flex-1">
           {navLinks.map((link) => {
             const isActive = checkIsActive(link.href, link.isExact);
@@ -146,7 +146,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
           })}
         </nav>
 
-        {/* Center: Brand */}
+        {}
         <div className="flex-1 md:flex-none flex justify-center">
           <Link href="/" className="flex flex-col items-center group">
             <span className="text-xl md:text-2xl font-serif tracking-[0.2em] font-bold text-stone-900 uppercase group-hover:opacity-80 transition-opacity">
@@ -155,7 +155,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
           </Link>
         </div>
 
-        {/* Right: Utilities */}
+        {}
         <div className="flex gap-6 items-center justify-end flex-1">
           <Link
             href={isLoggedIn ? "/account" : "/login"}
@@ -163,9 +163,9 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
             aria-label={isLoggedIn ? "My Account" : "Sign In"}
           >
             {isLoggedIn && avatarUrl ? (
-              /* Profile photo avatar */
+              
               <span className="w-7 h-7 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {}
                 <img
                   src={avatarUrl.includes('?') ? `${avatarUrl}&tr=w-56,h-56` : `${avatarUrl}?tr=w-56,h-56`}
                   alt="My profile"
@@ -189,7 +189,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
+      {}
       <div 
         className={`md:hidden absolute w-full bg-background border-b border-stone-200 transition-all duration-300 ease-in-out overflow-hidden ${
           isMobileMenuOpen ? 'max-h-96 opacity-100 shadow-sm' : 'max-h-0 opacity-0'
@@ -212,7 +212,7 @@ function HeaderContent({ isLoggedIn, profileImageUrl, userId = null }: HeaderCon
           >
             {isLoggedIn && avatarUrl && (
               <span className="w-6 h-6 rounded-full overflow-hidden border border-stone-200 shrink-0 block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {}
                 <img
                   src={avatarUrl.includes('?') ? `${avatarUrl}&tr=w-48,h-48` : `${avatarUrl}?tr=w-48,h-48`}
                   alt=""

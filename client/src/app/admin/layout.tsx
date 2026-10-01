@@ -39,12 +39,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!isAuthorized) {
-    return null; // Will redirect
+    return null; 
   }
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col">
-      {/* Admin Header */}
+      {}
       <header className="bg-stone-900 text-stone-50 py-4 px-6 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </header>
 
-      {/* Admin Content */}
+      {}
       <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-12">
         {children}
       </main>

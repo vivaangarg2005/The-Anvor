@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import AddToCartForm from '../../../components/AddToCartForm';
 
-// Dynamic SEO metadata generation
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const res = await getProduct(slug);
@@ -35,10 +35,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-24">
       <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">
         
-        {/* Left: Image Gallery */}
+        {}
         <div className="w-full lg:w-1/2">
           <div className="aspect-4/5 bg-stone-100 overflow-hidden relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {}
             <img 
               src={product.images?.[0] || 'https://via.placeholder.com/800x1000?text=No+Image'} 
               alt={product.name}
@@ -47,7 +47,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        {/* Right: Product Info */}
+        {}
         <div className="w-full lg:w-1/2 flex flex-col justify-center">
           <nav className="text-[10px] text-stone-500 mb-8 flex gap-3 uppercase tracking-widest">
             <Link href="/" className="hover:text-stone-900 transition-colors">Home</Link>
@@ -73,7 +73,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             {product.description}
           </p>
 
-          {/* Flexible Attributes */}
+          {}
           {product.attributes && Object.keys(product.attributes).length > 0 && (
             <div className="mb-12">
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-6 border-b border-stone-200 pb-3">Details</h3>

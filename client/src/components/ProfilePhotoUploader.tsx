@@ -13,9 +13,9 @@ interface Props {
   userId?: string | null;
 }
 
-/**
- * Generates 1–2 uppercase initials from a name string.
- */
+
+
+
 function getInitials(name: string): string {
   return name
     .trim()
@@ -36,14 +36,14 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastActionTime = useRef<number>(Date.now());
 
-  // Synchronize local display state when initialUrl changes from server revalidation
+  
   if (initialUrl !== prevInitialUrl || userId !== currentUserId) {
     setPrevInitialUrl(initialUrl);
     setCurrentUserId(userId);
     setEventPhotoUrl(undefined);
   }
 
-  // Subscribe to authStore changes (cross-page SPA navigation)
+  
   useEffect(() => {
     const interval = setInterval(() => {
       const storeId = getClientUserId();
@@ -54,15 +54,15 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
     return () => clearInterval(interval);
   }, [clientUserIdState]);
 
-  // Determine effective identity
+  
   const effectiveUserId = clientUserIdState !== null ? clientUserIdState : currentUserId;
   const showStaleFallback = clientUserIdState !== null && clientUserIdState !== currentUserId;
 
-  // Authoritative display URL: instant event override if active, else server prop
+  
   const basePhotoUrl = showStaleFallback ? null : initialUrl;
   const photoUrl = eventPhotoUrl !== undefined ? eventPhotoUrl : basePhotoUrl;
 
-  // Cropper state
+  
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -72,7 +72,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side pre-validation
+    
     const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
     if (!ALLOWED.includes(file.type)) {
       setError('Unsupported file type. Please use JPEG, PNG, or WebP.');
@@ -101,7 +101,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
 
     setIsUploading(true);
     const prevSrc = cropImageSrc;
-    // Hide cropper immediately
+    
     setCropImageSrc(null);
 
     try {
@@ -115,7 +115,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
         const newUrl = result.data.profileImageUrl;
         setEventPhotoUrl(newUrl);
 
-        // Immediate event for Header and other UI listeners in SAME TAB
+        
         if (typeof window !== 'undefined') {
           lastActionTime.current = Date.now();
           window.dispatchEvent(
@@ -123,7 +123,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
           );
         }
 
-        // Revalidate server components in background
+        
         router.refresh();
       }
     } catch (err) {
@@ -151,7 +151,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
       await deleteProfilePhoto();
       setEventPhotoUrl(null);
 
-      // Immediate event for Header and other UI listeners in SAME TAB
+      
       if (typeof window !== 'undefined') {
         lastActionTime.current = Date.now();
         window.dispatchEvent(
@@ -159,7 +159,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
         );
       }
 
-      // Revalidate server components in background
+      
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove photo.');
@@ -173,7 +173,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
   return (
     <>
       <div className="flex flex-col items-center gap-4">
-        {/* Avatar */}
+        {}
         <button
           type="button"
           onClick={() => !isUploading && fileInputRef.current?.click()}
@@ -182,7 +182,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
           disabled={isUploading}
         >
           {photoUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
+            
             <img
               src={photoUrl.includes('?') ? `${photoUrl}&tr=w-160,h-160` : `${photoUrl}?tr=w-160,h-160`}
               alt={`${userName}'s profile photo`}
@@ -194,7 +194,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
             </span>
           )}
 
-          {/* Hover overlay */}
+          {}
           <span className={`absolute inset-0 bg-stone-900/40 flex items-center justify-center transition-opacity ${isUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
             {isUploading ? (
               <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
@@ -210,7 +210,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
           </span>
         </button>
 
-        {/* Hidden file input */}
+        {}
         <input
           ref={fileInputRef}
           type="file"
@@ -221,7 +221,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
           aria-label="Select profile photo"
         />
 
-        {/* Actions */}
+        {}
         <div className="flex flex-col items-center gap-2">
           <button
             type="button"
@@ -243,20 +243,20 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
           )}
         </div>
 
-        {/* Error */}
+        {}
         {error && (
           <p className="text-[10px] text-red-600 text-center max-w-45">{error}</p>
         )}
       </div>
 
-      {/* Cropper Modal Overlay */}
+      {}
       {cropImageSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 md:p-6 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-135 h-[min(580px,calc(100dvh-2rem))] bg-white rounded-xl md:rounded-2xl overflow-hidden flex flex-col shadow-2xl my-auto">
             
-            {/* Header */}
+            {}
             <div className="flex items-center px-4 h-14 border-b border-stone-100 shrink-0 bg-white z-10 gap-2">
-              {/* Cancel — fixed width so title has room */}
+              {}
               <button 
                 onClick={handleCancelCrop} 
                 className="shrink-0 p-2 -ml-2 text-stone-500 hover:text-stone-900 transition-colors focus:outline-none"
@@ -267,12 +267,12 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
                 </svg>
               </button>
               
-              {/* Title — takes remaining space, truncates if needed */}
+              {}
               <h3 className="flex-1 min-w-0 text-center text-sm md:text-base font-medium text-stone-900 truncate">
                 Drag the image to adjust
               </h3>
               
-              {/* Upload — fixed width */}
+              {}
               <button 
                 onClick={handleCropSubmit} 
                 className="shrink-0 text-sm font-semibold text-stone-900 hover:text-stone-600 transition-colors focus:outline-none px-2 py-1"
@@ -281,7 +281,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
               </button>
             </div>
             
-            {/* Cropper Area */}
+            {}
             <div className="relative flex-1 min-h-0 bg-stone-900">
               <Cropper
                 image={cropImageSrc}
@@ -296,7 +296,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
                 objectFit="horizontal-cover"
               />
 
-              {/* Zoom controls float */}
+              {}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col bg-white rounded-full p-1 shadow-lg border border-stone-100 z-10">
                 <button 
                   onClick={() => setZoom(z => Math.min(z + 0.1, 3))}
@@ -315,7 +315,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
                 </button>
               </div>
 
-              {/* Footer Floating Checkmark */}
+              {}
               <div className="absolute bottom-5 right-5 z-10">
                 <button 
                   onClick={handleCropSubmit} 
@@ -329,7 +329,7 @@ export default function ProfilePhotoUploader({ initialUrl, userName, userId = nu
               </div>
             </div>
             
-            {/* White bottom bar */}
+            {}
             <div className="h-8 sm:h-10 bg-white shrink-0"></div>
           </div>
         </div>

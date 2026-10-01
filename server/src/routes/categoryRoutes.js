@@ -4,11 +4,11 @@ const router = express.Router();
 
 router.route('/')
   .get(getCategories)
-  .post(createCategory); // TODO: Protect with Admin Auth later
+  .post(createCategory); 
 
 router.route('/:id')
   .get(getCategory)
-  .put(updateCategory)   // TODO: Protect with Admin Auth later
-  .delete(deleteCategory); // TODO: Protect with Admin Auth later
+  .put(updateCategory)   
+  .delete(deleteCategory); 
 
 module.exports = router;
