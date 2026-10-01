@@ -50,6 +50,7 @@ A premium ecommerce platform for handbags and purses — built with a modern, AP
 - **Shopping Cart** — Guest cart (localStorage) + authenticated cart (MongoDB), with automatic merge on login.
 - **Address Book** — Save, edit, and select from multiple shipping addresses during checkout.
 - **Checkout & Payments** — Razorpay-powered payment flow with backend-calculated totals and cryptographic signature verification.
+- **Order Expiry** — 20-minute price lock window. Unpaid orders expire automatically via a background job and lazy-evaluation.
 - **Order History** — View past orders, order details, and payment status.
 - **Payment Retry** — Pending orders display a "Pay Now" button to re-initiate payment without creating duplicate orders.
 

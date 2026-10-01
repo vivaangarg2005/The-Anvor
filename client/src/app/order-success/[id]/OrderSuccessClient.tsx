@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { initiatePayment, verifyPayment } from '../../../lib/api';
+import OrderExpiryBanner from '../../../components/OrderExpiryBanner';
 
 declare global {
   interface Window {
@@ -99,6 +100,7 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
   };
 
   const isPaid = order.paymentStatus === 'PAID';
+  const isExpired = order.status === 'EXPIRED';
 
   return (
     <>
@@ -125,11 +127,13 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
           {/* Heading */}
           <div>
             <h1 className="text-3xl font-serif text-stone-900 mb-4">
-              {isPaid ? 'Your order is placed successfully' : 'Order created — Payment pending'}
+              {isPaid ? 'Your order is placed successfully' : isExpired ? 'Order expired' : 'Order created — Payment pending'}
             </h1>
             <p className="text-stone-500 mb-8">
               {isPaid
                 ? 'Thank you for your order. We are processing it and will update you soon.'
+                : isExpired
+                ? 'Payment was not completed within 20 minutes. Please create a new order with current prices.'
                 : 'Your order is saved. Complete payment to confirm it.'}
             </p>
           </div>
@@ -146,8 +150,8 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             </div>
             <div className="flex justify-between items-center text-sm border-t border-stone-200 pt-4">
               <span className="text-stone-500 uppercase tracking-widest text-[10px] font-bold">Payment Status</span>
-              <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 ${isPaid ? 'bg-stone-900 text-stone-50' : 'bg-orange-100 text-orange-900'}`}>
-                {isPaid ? 'Paid' : 'Pending'}
+              <span className={`font-bold text-[10px] uppercase tracking-widest px-2 py-1 ${isPaid ? 'bg-stone-900 text-stone-50' : isExpired ? 'bg-red-100 text-red-900' : 'bg-orange-100 text-orange-900'}`}>
+                {isPaid ? 'Paid' : isExpired ? 'Expired' : 'Pending'}
               </span>
             </div>
             {isPaid && order.status && (
@@ -165,9 +169,14 @@ export default function OrderSuccessClient({ order: initialOrder }: { order: any
             </div>
           )}
 
+          {/* Expiry countdown for pending orders */}
+          {!isPaid && !isExpired && order.expiresAt && (
+            <OrderExpiryBanner expiresAt={order.expiresAt} />
+          )}
+
           {/* Actions */}
           <div className="flex flex-col gap-4 pt-4">
-            {!isPaid && (
+            {!isPaid && !isExpired && (
               <button
                 onClick={handlePayNow}
                 disabled={isPaymentLoading}

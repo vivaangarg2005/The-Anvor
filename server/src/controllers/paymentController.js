@@ -31,6 +31,24 @@ exports.initiatePayment = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Order is already paid' });
     }
 
+    // Block payment if the order has expired or is past its payment window
+    if (order.status === 'EXPIRED') {
+      return res.status(410).json({ success: false, error: 'This order has expired. Please create a new order with current prices.' });
+    }
+    if (
+      order.status === 'PENDING' &&
+      order.paymentStatus === 'PENDING' &&
+      order.expiresAt &&
+      new Date() > order.expiresAt
+    ) {
+      // Lazy-expire the order right here
+      order.status = 'EXPIRED';
+      order.paymentStatus = 'FAILED';
+      order.expiredAt = new Date();
+      await order.save();
+      return res.status(410).json({ success: false, error: 'This order has expired. Please create a new order with current prices.' });
+    }
+
     // Idempotent: if a Razorpay order was already created for this internal order, reuse it.
     if (order.razorpayOrderId) {
       return res.status(200).json({

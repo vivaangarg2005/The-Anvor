@@ -48,12 +48,15 @@ function OrderCard({ order }: { order: any }) {
   const totalItems: number = order.items?.length ?? 0;
   const extraCount = totalItems > 3 ? totalItems - 3 : 0;
 
+  const isExpired = order.status === 'EXPIRED';
   const paymentBadgeClass =
     order.paymentStatus === 'PAID'
       ? 'bg-stone-900 text-stone-50'
-      : order.paymentStatus === 'FAILED'
+      : order.paymentStatus === 'FAILED' || isExpired
       ? 'bg-red-100 text-red-800'
       : 'bg-orange-100 text-orange-700';
+
+  const paymentLabel = isExpired ? 'EXPIRED' : order.paymentStatus;
 
   return (
     <Link
@@ -103,7 +106,7 @@ function OrderCard({ order }: { order: any }) {
         <div className="flex flex-col items-end gap-2 shrink-0">
           <p className="text-sm font-medium text-stone-900">₹{order.grandTotal}</p>
           <span className={`inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest ${paymentBadgeClass}`}>
-            {order.paymentStatus}
+            {paymentLabel}
           </span>
         </div>
 

@@ -58,6 +58,7 @@ export default function AdminOrdersPage() {
           <option value="SHIPPED">Shipped</option>
           <option value="DELIVERED">Delivered</option>
           <option value="CANCELLED">Cancelled</option>
+          <option value="EXPIRED">Expired</option>
         </select>
 
         <select 
@@ -122,16 +123,16 @@ export default function AdminOrdersPage() {
                     <td className="p-4">
                       <span className={`inline-block px-2 py-1 text-[10px] uppercase tracking-widest font-bold ${
                         order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                        order.paymentStatus === 'FAILED' ? 'bg-red-100 text-red-800' :
+                        order.paymentStatus === 'FAILED' || order.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
                         'bg-stone-200 text-stone-600'
                       }`}>
-                        {order.paymentStatus}
+                        {order.status === 'EXPIRED' ? 'EXPIRED' : order.paymentStatus}
                       </span>
                     </td>
                     <td className="p-4">
                       <span className={`inline-block px-2 py-1 text-[10px] uppercase tracking-widest font-bold ${
                         ['SHIPPED', 'DELIVERED'].includes(order.status) ? 'bg-green-100 text-green-800' :
-                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                        order.status === 'CANCELLED' || order.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
                         'bg-blue-50 text-blue-800'
                       }`}>
                         {order.status}

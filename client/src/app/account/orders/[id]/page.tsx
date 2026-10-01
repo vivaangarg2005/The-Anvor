@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getOrderById } from '../../../../lib/api';
 import PaymentRetryButton from '../../../../components/PaymentRetryButton';
+import OrderExpiryBanner from '../../../../components/OrderExpiryBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,15 +48,28 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <span className={`inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${
             order.paymentStatus === 'PAID'
               ? 'bg-stone-900 text-stone-50'
-              : order.paymentStatus === 'FAILED'
+              : order.paymentStatus === 'FAILED' || order.status === 'EXPIRED'
               ? 'bg-red-100 text-red-900'
               : 'bg-orange-100 text-orange-900'
           }`}>
-            Payment: {order.paymentStatus}
+            Payment: {order.status === 'EXPIRED' ? 'EXPIRED' : order.paymentStatus}
           </span>
         </div>
-        {order.paymentStatus === 'PENDING' && (
-          <PaymentRetryButton order={order} />
+        {order.status === 'EXPIRED' && (
+          <div className="mt-4 bg-stone-100 border border-stone-200 p-4">
+            <p className="text-xs text-stone-600">
+              This order expired because payment was not completed within 20 minutes. Prices may have changed since this order was placed.
+            </p>
+            <Link href="/products" className="inline-block mt-3 text-[10px] text-stone-900 font-bold uppercase tracking-widest border-b border-stone-900 pb-0.5 hover:opacity-70 transition-opacity">
+              Continue Shopping →
+            </Link>
+          </div>
+        )}
+        {order.paymentStatus === 'PENDING' && order.status !== 'EXPIRED' && (
+          <>
+            <OrderExpiryBanner expiresAt={order.expiresAt} />
+            <PaymentRetryButton order={order} />
+          </>
         )}
       </div>
 

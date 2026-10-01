@@ -2,20 +2,16 @@ import Link from 'next/link';
 import { getProducts } from '../lib/api';
 import ProductCardCartControl from '../components/ProductCardCartControl';
 
-// Force dynamic rendering to ensure fresh data during development
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  // Fetch a small limit of products for the featured section
-  const productsData = await getProducts({ limit: 4 }); // fetch 4 instead of 3 for a 2x2 grid or better horizontal scrolling
+  const productsData = await getProducts({ limit: 4 }); 
   const featuredProducts = productsData.data || [];
 
   return (
     <div className="flex flex-col bg-background">
-      {/* Editorial Hero Section */}
       <section className="w-full flex flex-col md:flex-row h-auto md:h-[calc(100vh-5rem)] min-h-112.5 md:max-h-175 border-b border-stone-200 overflow-hidden">
         
-        {/* Text Area */}
         <div className="w-full md:w-1/2 flex flex-col justify-center items-start px-8 md:px-12 lg:px-20 py-12 md:py-0">
           <p className="text-[9px] md:text-[10px] tracking-[0.2em] font-bold mb-4 md:mb-6">
             <span className="text-stone-400">THE</span> <span className="text-stone-500">ANVOR</span>
@@ -37,18 +33,13 @@ export default async function Home() {
           </Link>
         </div>
 
-        {/* Product Image Area */}
         <div className="w-full md:w-1/2 h-[50vh] md:h-full relative bg-background flex items-center justify-center">
-          {featuredProducts.length > 0 ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img 
-              src={featuredProducts[0].images?.[0] || 'https://via.placeholder.com/1000x1200?text=Editorial'}
-              alt="Featured Collection"
-              className="w-[85%] h-[85%] object-cover object-center shadow-sm"
-            />
-          ) : (
-            <div className="w-[85%] h-[85%] bg-stone-200"></div>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/images/hero_purse.png"
+            alt="Featured Collection"
+            className="w-[85%] h-[85%] object-cover object-center shadow-sm"
+          />
         </div>
       </section>
 

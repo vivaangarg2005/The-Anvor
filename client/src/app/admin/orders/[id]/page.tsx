@@ -156,10 +156,10 @@ export default function AdminOrderDetailPage() {
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-widest mb-3">Payment Status</h3>
               <span className={`inline-flex items-center px-3 py-1 text-[10px] uppercase tracking-widest font-bold ${
                 order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                order.paymentStatus === 'FAILED' ? 'bg-red-100 text-red-800' :
+                order.paymentStatus === 'FAILED' || order.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
                 'bg-stone-200 text-stone-600'
               }`}>
-                {order.paymentStatus}
+                {order.status === 'EXPIRED' ? 'EXPIRED' : order.paymentStatus}
               </span>
               <p className="text-[10px] text-stone-400 mt-2">Read-only. Controlled by Razorpay.</p>
             </div>

@@ -58,7 +58,7 @@ exports.updateAdminOrderStatus = async (req, res, next) => {
     const { status } = req.body;
     
     // Explicitly validate against the allowed enum values from the model
-    const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'EXPIRED'];
     
     if (!status || !allowedStatuses.includes(status)) {
       return res.status(400).json({ 

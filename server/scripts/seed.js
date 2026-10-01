@@ -6,8 +6,7 @@ const Product = require('../src/models/Product');
 const seedDB = async () => {
   try {
     console.log('Connecting to database...');
-    const directUri = "mongodb://store_admin:YfM4HoYFQKx2lut4@ac-iiskqid-shard-00-00.xrb8nbj.mongodb.net:27017,ac-iiskqid-shard-00-01.xrb8nbj.mongodb.net:27017,ac-iiskqid-shard-00-02.xrb8nbj.mongodb.net:27017/purse_store?ssl=true&replicaSet=atlas-iiskqid-shard-0&authSource=admin&retryWrites=true&w=majority";
-    await mongoose.connect(directUri, { family: 4 });
+    await mongoose.connect(process.env.MONGODB_URI);
     
     console.log('Clearing old data...');
     await Product.deleteMany();

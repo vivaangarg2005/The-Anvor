@@ -1,9 +1,4 @@
-/**
- * cartController.js
- * Thin HTTP layer for cart operations.
- */
-
-const cartService = require('../services/cartService');
+const cartService = require("../services/cartService");
 
 const getCart = async (req, res, next) => {
   try {
@@ -21,7 +16,9 @@ const addItem = async (req, res, next) => {
     const { productId, quantity } = req.body;
 
     if (!productId) {
-      return res.status(400).json({ success: false, error: 'Product ID is required.' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Product ID is required." });
     }
 
     const cart = await cartService.addItem(userId, productId, quantity || 1);
@@ -37,7 +34,11 @@ const updateItemQuantity = async (req, res, next) => {
     const { productId } = req.params;
     const { quantity } = req.body;
 
-    const cart = await cartService.updateItemQuantity(userId, productId, quantity);
+    const cart = await cartService.updateItemQuantity(
+      userId,
+      productId,
+      quantity,
+    );
     res.status(200).json({ success: true, data: cart });
   } catch (error) {
     next(error);
@@ -70,9 +71,14 @@ const mergeCart = async (req, res, next) => {
   try {
     const userId = req.user.userId;
     const { items } = req.body;
-    
+
     if (!items || !Array.isArray(items)) {
-      return res.status(400).json({ success: false, error: 'Items array is required for merging.' });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "Items array is required for merging.",
+        });
     }
 
     const cart = await cartService.mergeGuestCart(userId, items);

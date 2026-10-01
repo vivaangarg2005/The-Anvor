@@ -66,8 +66,14 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
+      enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'EXPIRED'],
       default: 'PENDING',
+    },
+    expiresAt: {
+      type: Date,
+      // Set at order creation to createdAt + 20 minutes.
+      // Orders with paymentStatus PENDING past this time are expired.
+      index: true,
     },
     paymentStatus: {
       type: String,
@@ -110,6 +116,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       sparse: true, // null until payment is initiated
       index: true,
+    },
+    expiredAt: {
+      type: Date,
+      // Actual timestamp when the order was marked EXPIRED by the background job.
     },
     razorpayPaymentId: {
       type: String,

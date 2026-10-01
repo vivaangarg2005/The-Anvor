@@ -3,6 +3,9 @@ const Cart = require('../models/Cart');
 const Address = require('../models/Address');
 const Product = require('../models/Product');
 
+// 20-minute payment window in milliseconds
+const ORDER_EXPIRY_MS = 20 * 60 * 1000;
+
 /**
  * Creates a new order from the current authenticated user's cart.
  */
@@ -20,6 +23,10 @@ exports.createOrder = async (req, res, next) => {
     if (existingOrder) {
       if (existingOrder.user.toString() !== userId) {
         return res.status(403).json({ success: false, error: 'Idempotency key reuse across users is not allowed' });
+      }
+      // If the existing order has expired, tell the user to create a new one
+      if (existingOrder.status === 'EXPIRED') {
+        return res.status(410).json({ success: false, error: 'This order has expired. Please create a new order.' });
       }
       return res.status(200).json({ success: true, data: existingOrder });
     }
@@ -91,7 +98,9 @@ exports.createOrder = async (req, res, next) => {
       landmark: address.landmark,
     };
 
-    // 5. Create Order
+    // 5. Create Order with 20-minute expiry window
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + ORDER_EXPIRY_MS);
     let newOrder;
     try {
       newOrder = await Order.create({
@@ -105,7 +114,8 @@ exports.createOrder = async (req, res, next) => {
         discountTotal,
         grandTotal,
         status: 'PENDING',
-        paymentStatus: 'PENDING'
+        paymentStatus: 'PENDING',
+        expiresAt,
       });
     } catch (err) {
       if (err.code === 11000 && err.keyPattern && err.keyPattern.idempotencyKey) {
@@ -142,7 +152,8 @@ exports.getMyOrders = async (req, res, next) => {
 };
 
 /**
- * Get a specific order by ID, verifying ownership
+ * Get a specific order by ID, verifying ownership.
+ * Lazily expires the order if it's past the expiry window and still unpaid.
  */
 exports.getOrderById = async (req, res, next) => {
   try {
@@ -155,6 +166,19 @@ exports.getOrderById = async (req, res, next) => {
 
     if (order.user.toString() !== userId) {
       return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+
+    // Lazy expiry: if the order is still PENDING payment and past its window, expire it now
+    if (
+      order.status === 'PENDING' &&
+      order.paymentStatus === 'PENDING' &&
+      order.expiresAt &&
+      new Date() > order.expiresAt
+    ) {
+      order.status = 'EXPIRED';
+      order.paymentStatus = 'FAILED';
+      order.expiredAt = new Date();
+      await order.save();
     }
 
     res.status(200).json({ success: true, data: order });
