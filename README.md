@@ -239,23 +239,6 @@ The backend will verify the cryptographic signature and mark the order as **PAID
 
 ---
 
-## Development Roadmap
-
-| Day | Milestone                        | Status |
-| --- | -------------------------------- | ------ |
-| 1   | Project Foundation & Setup       | ✅      |
-| 2   | Authentication (OTP + JWT)       | ✅      |
-| 3   | Product Catalog & Categories     | ✅      |
-| 4   | Shopping Cart (Guest + Auth)     | ✅      |
-| 5   | Address Book                     | ✅      |
-| 6   | Homepage & Product UI            | ✅      |
-| 7   | Order System (Server-Authoritative) | ✅   |
-| 8   | Razorpay Payment Integration     | ✅      |
-| 9   | Admin Dashboard                  | 🔲      |
-| 10  | Polish, SEO & Deployment         | 🔲      |
-
----
-
 ## License
 
 This project is proprietary. All rights reserved.
