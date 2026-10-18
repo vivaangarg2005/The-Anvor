@@ -1,10 +1,12 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 /**
- * Background job: Expire unpaid orders past their 20-minute payment window.
+ * Background job: Expire unpaid orders past their 20-minute payment window and restore stock.
  *
  * Runs on a setInterval inside the server process. No external scheduler needed.
- * Uses an atomic updateMany so it's safe even if multiple server instances run.
+ * Atomically transitions each eligible order from PENDING to EXPIRED so concurrent job
+ * runners or requests never double-expire or double-restore stock.
  *
  * Criteria for expiry:
  *   - status === 'PENDING'
@@ -14,23 +16,45 @@ const Order = require('../models/Order');
 async function expireStaleOrders() {
   try {
     const now = new Date();
-    const result = await Order.updateMany(
-      {
-        status: 'PENDING',
-        paymentStatus: 'PENDING',
-        expiresAt: { $lte: now },
-      },
-      {
-        $set: {
-          status: 'EXPIRED',
-          paymentStatus: 'FAILED',
-          expiredAt: now,
-        },
-      }
-    );
+    const staleOrders = await Order.find({
+      status: 'PENDING',
+      paymentStatus: 'PENDING',
+      expiresAt: { $lte: now },
+    });
 
-    if (result.modifiedCount > 0) {
-      console.log(`[OrderExpiry] Expired ${result.modifiedCount} stale order(s) at ${now.toISOString()}`);
+    let expiredCount = 0;
+    for (const order of staleOrders) {
+      const updated = await Order.findOneAndUpdate(
+        {
+          _id: order._id,
+          status: 'PENDING',
+          paymentStatus: 'PENDING',
+        },
+        {
+          $set: {
+            status: 'EXPIRED',
+            paymentStatus: 'FAILED',
+            expiredAt: now,
+          },
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (updated) {
+        expiredCount++;
+        for (const item of updated.items) {
+          if (item.product && item.quantity) {
+            await Product.updateOne(
+              { _id: item.product },
+              { $inc: { stockQuantity: item.quantity } }
+            );
+          }
+        }
+      }
+    }
+
+    if (expiredCount > 0) {
+      console.log(`[OrderExpiry] Expired ${expiredCount} stale order(s) and restored reserved stock at ${now.toISOString()}`);
     }
   } catch (err) {
     console.error('[OrderExpiry] Error expiring stale orders:', err);

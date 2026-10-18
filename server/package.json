@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node testCart.js && node testOrder.js && node testPayment.js && node testStockRaceCondition.js",
+    "test:race": "node testStockRaceCondition.js",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
   },

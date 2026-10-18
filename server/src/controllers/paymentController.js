@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const razorpay = require('../config/razorpayClient');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 /**
  * POST /api/orders/:id/payment
@@ -41,11 +42,33 @@ exports.initiatePayment = async (req, res, next) => {
       order.expiresAt &&
       new Date() > order.expiresAt
     ) {
-      // Lazy-expire the order right here
-      order.status = 'EXPIRED';
-      order.paymentStatus = 'FAILED';
-      order.expiredAt = new Date();
-      await order.save();
+      // Lazy-expire the order right here and restore stock
+      const updatedOrder = await Order.findOneAndUpdate(
+        {
+          _id: order._id,
+          status: 'PENDING',
+          paymentStatus: 'PENDING',
+        },
+        {
+          $set: {
+            status: 'EXPIRED',
+            paymentStatus: 'FAILED',
+            expiredAt: new Date(),
+          },
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (updatedOrder) {
+        for (const item of updatedOrder.items) {
+          if (item.product && item.quantity) {
+            await Product.updateOne(
+              { _id: item.product },
+              { $inc: { stockQuantity: item.quantity } }
+            );
+          }
+        }
+      }
       return res.status(410).json({ success: false, error: 'This order has expired. Please create a new order with current prices.' });
     }
 
@@ -140,6 +163,11 @@ exports.verifyPayment = async (req, res, next) => {
     // Idempotent: already paid — return success safely
     if (order.paymentStatus === 'PAID') {
       return res.status(200).json({ success: true, data: { paymentStatus: 'PAID' } });
+    }
+
+    // Block verification if order has expired
+    if (order.status === 'EXPIRED') {
+      return res.status(410).json({ success: false, error: 'This order has expired. Payment cannot be verified.' });
     }
 
     // Security: Razorpay order ID must match what we stored — prevents cross-order attacks

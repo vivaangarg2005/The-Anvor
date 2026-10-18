@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 exports.getAdminOrders = async (req, res, next) => {
   try {
@@ -67,18 +68,63 @@ exports.updateAdminOrderStatus = async (req, res, next) => {
       });
     }
 
-    // Only update the operational status field, ignore paymentStatus or other fields
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { $set: { status } },
-      { new: true, runValidators: true }
-    ).populate('user', 'name email phone');
-
-    if (!order) {
+    const currentOrder = await Order.findById(req.params.id);
+    if (!currentOrder) {
       return res.status(404).json({ success: false, error: 'Order not found' });
     }
 
-    res.json({ success: true, data: order });
+    // If cancelling or expiring an order that was previously active, restore stock
+    if (
+      (status === 'CANCELLED' || status === 'EXPIRED') &&
+      currentOrder.status !== 'CANCELLED' &&
+      currentOrder.status !== 'EXPIRED'
+    ) {
+      for (const item of currentOrder.items) {
+        if (item.product && item.quantity) {
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { stockQuantity: item.quantity } }
+          );
+        }
+      }
+    }
+
+    // If reactivating a cancelled/expired order, attempt to re-reserve stock atomically
+    if (
+      (currentOrder.status === 'CANCELLED' || currentOrder.status === 'EXPIRED') &&
+      status !== 'CANCELLED' &&
+      status !== 'EXPIRED'
+    ) {
+      const reReserved = [];
+      for (const item of currentOrder.items) {
+        const prod = await Product.findOneAndUpdate(
+          { _id: item.product, stockQuantity: { $gte: item.quantity } },
+          { $inc: { stockQuantity: -item.quantity } },
+          { returnDocument: 'after' }
+        );
+        if (!prod) {
+          // Rollback partial re-reservations
+          for (const r of reReserved) {
+            await Product.updateOne({ _id: r.productId }, { $inc: { stockQuantity: r.quantity } });
+          }
+          return res.status(400).json({
+            success: false,
+            error: `Cannot reactivate order: insufficient stock for product "${item.productName || item.product}".`,
+          });
+        }
+        reReserved.push({ productId: item.product, quantity: item.quantity });
+      }
+    }
+
+    currentOrder.status = status;
+    if (status === 'EXPIRED') {
+      currentOrder.paymentStatus = 'FAILED';
+      currentOrder.expiredAt = new Date();
+    }
+    await currentOrder.save();
+
+    await currentOrder.populate('user', 'name email phone');
+    res.json({ success: true, data: currentOrder });
   } catch (error) {
     next(error);
   }

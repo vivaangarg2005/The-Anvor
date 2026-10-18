@@ -43,30 +43,67 @@ exports.createOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Cart is empty' });
     }
 
-    // 4. Validate Products and compute totals
+    // 4. Validate Products and atomically decrement stock in MongoDB
+    // Using atomic condition { stockQuantity: { $gte: quantity } } combined with $inc: { stockQuantity: -quantity }
+    // to prevent check-then-act race conditions where concurrent requests both see stock > 0.
     const orderItems = [];
+    const reservedStockItems = [];
     let subtotal = 0;
 
     for (const cartItem of cart.items) {
-      const product = await Product.findById(cartItem.product);
-      
-      // Ensure product exists and is active/purchasable
-      if (!product || !product.isActive) {
-        return res.status(400).json({ 
-          success: false, 
-          error: `Product ${cartItem.product} is no longer available.` 
+      const quantity = cartItem.quantity;
+
+      // ATOMIC UPDATE: Check stockQuantity >= quantity AND decrement in the exact same operation
+      const updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: cartItem.product,
+          isActive: true,
+          stockQuantity: { $gte: quantity },
+        },
+        {
+          $inc: { stockQuantity: -quantity },
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (!updatedProduct) {
+        // Atomic decrement failed: either product does not exist, is inactive, or has insufficient stock.
+        // Roll back any previously decremented items in this transaction to keep stock consistent
+        for (const item of reservedStockItems) {
+          await Product.updateOne(
+            { _id: item.productId },
+            { $inc: { stockQuantity: item.quantity } }
+          );
+        }
+
+        const product = await Product.findById(cartItem.product);
+        if (!product || !product.isActive) {
+          return res.status(400).json({ 
+            success: false, 
+            error: `Product ${cartItem.product} is no longer available.` 
+          });
+        }
+
+        return res.status(400).json({
+          success: false,
+          error: `Insufficient stock for product "${product.name}". Available: ${product.stockQuantity}, Requested: ${quantity}.`,
         });
       }
 
-      const unitPrice = product.price;
-      const quantity = cartItem.quantity;
+      // Track item for rollback if subsequent items fail or Order.create throws
+      reservedStockItems.push({
+        productId: updatedProduct._id,
+        quantity,
+      });
+
+      const unitPrice = updatedProduct.price;
       const lineTotal = unitPrice * quantity;
 
       orderItems.push({
-        product: product._id,
-        productName: product.name,
-        productSlug: product.slug,
-        productImage: product.images && product.images.length > 0 ? product.images[0] : null,
+        product: updatedProduct._id,
+        productName: updatedProduct.name,
+        productSlug: updatedProduct.slug,
+        productImage: updatedProduct.images && updatedProduct.images.length > 0 ? updatedProduct.images[0] : null,
         unitPrice,
         quantity,
         lineTotal
@@ -118,6 +155,14 @@ exports.createOrder = async (req, res, next) => {
         expiresAt,
       });
     } catch (err) {
+      // Roll back reserved stock if order creation failed
+      for (const item of reservedStockItems) {
+        await Product.updateOne(
+          { _id: item.productId },
+          { $inc: { stockQuantity: item.quantity } }
+        );
+      }
+
       if (err.code === 11000 && err.keyPattern && err.keyPattern.idempotencyKey) {
         // Concurrent duplicate request was caught by the unique index
         const concurrentOrder = await Order.findOne({ idempotencyKey });
@@ -153,7 +198,7 @@ exports.getMyOrders = async (req, res, next) => {
 
 /**
  * Get a specific order by ID, verifying ownership.
- * Lazily expires the order if it's past the expiry window and still unpaid.
+ * Lazily expires the order if it's past the expiry window and still unpaid, restoring stock.
  */
 exports.getOrderById = async (req, res, next) => {
   try {
@@ -168,17 +213,42 @@ exports.getOrderById = async (req, res, next) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    // Lazy expiry: if the order is still PENDING payment and past its window, expire it now
+    // Lazy expiry: if the order is still PENDING payment and past its window, expire it now and restore stock
     if (
       order.status === 'PENDING' &&
       order.paymentStatus === 'PENDING' &&
       order.expiresAt &&
       new Date() > order.expiresAt
     ) {
-      order.status = 'EXPIRED';
-      order.paymentStatus = 'FAILED';
-      order.expiredAt = new Date();
-      await order.save();
+      const updatedOrder = await Order.findOneAndUpdate(
+        {
+          _id: order._id,
+          status: 'PENDING',
+          paymentStatus: 'PENDING',
+        },
+        {
+          $set: {
+            status: 'EXPIRED',
+            paymentStatus: 'FAILED',
+            expiredAt: new Date(),
+          },
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (updatedOrder) {
+        for (const item of updatedOrder.items) {
+          if (item.product && item.quantity) {
+            await Product.updateOne(
+              { _id: item.product },
+              { $inc: { stockQuantity: item.quantity } }
+            );
+          }
+        }
+        order.status = 'EXPIRED';
+        order.paymentStatus = 'FAILED';
+        order.expiredAt = updatedOrder.expiredAt;
+      }
     }
 
     res.status(200).json({ success: true, data: order });

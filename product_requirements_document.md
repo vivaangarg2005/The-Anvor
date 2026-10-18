@@ -151,10 +151,11 @@ We must separate **Payment Status** from **Order Status**.
 * **Order Statuses (Future):** `RETURN_REQUESTED`, `RETURNED`.
 
 ## 14. Inventory Requirements
-* **Stock Quantity:** Integer field on the Product document.
-* **Validation:** Checked when item added to cart, viewed in cart, and immediately before generating Razorpay order.
-* **Reducing Stock:** Occurs strictly AFTER the payment signature is verified as successful.
-* **Race Conditions:** To prevent overselling (two users buying the last purse at the same exact second), the backend will use MongoDB atomic operators (`$inc: { stock: -quantity }`) combined with a query condition `{ stock: { $gte: quantity } }`. If this fails, the transaction is aborted, and the user is refunded/notified.
+* **Stock Quantity:** Integer field (`stockQuantity`) on the Product document.
+* **Validation:** Checked when item added to cart, viewed in cart, and atomically reserved during order creation.
+* **Reserving/Reducing Stock:** Occurs atomically during order creation (`POST /api/orders`) using MongoDB atomic operators (`$inc: { stockQuantity: -quantity }`) combined with a filter condition `{ stockQuantity: { $gte: quantity }, isActive: true }`.
+* **Race Conditions & Overselling Prevention:** To prevent overselling (e.g. two users buying the last purse at the same exact second), MongoDB's atomic find-and-update guarantees that only one concurrent request matches `{ stockQuantity: { $gte: quantity } }` and decrements the last item. Any concurrent request fails immediately with a `400 Bad Request` ("Insufficient stock"), keeping inventory strictly non-negative.
+* **Rollback & Order Expiry:** If a multi-item cart experiences insufficient stock for any subsequent item, previously reserved items are immediately rolled back. If an unpaid order expires after its 20-minute payment window or is cancelled by an admin, the reserved stock is automatically returned to inventory (`$inc: { stockQuantity: quantity }`).
 
 ## 15. Search, Filtering and Sorting
 * **V1:** Basic text search via MongoDB regex or text index on `name` and `description`. Filtering by `category_id`. Sorting by Price (High/Low) and Newest.
