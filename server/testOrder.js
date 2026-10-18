@@ -219,6 +219,19 @@ const runTests = async () => {
     console.error('❌ TEST FAILED:', err.message || err);
     process.exit(1);
   } finally {
+    try {
+      await Category.deleteMany({ slug: 'test-category' });
+      await Product.deleteMany({ sku: { $in: ['TEST-ORDER-1', 'TEST-ORDER-2'] } });
+      let uA = await User.findOne({ phone: '+91000000000A' });
+      let uB = await User.findOne({ phone: '+91000000000B' });
+      const uIds = [uA?._id, uB?._id].filter(Boolean);
+      if (uIds.length > 0) {
+        await Order.deleteMany({ user: { $in: uIds } });
+        await Address.deleteMany({ user: { $in: uIds } });
+        await Cart.deleteMany({ user: { $in: uIds } });
+        await User.deleteMany({ _id: { $in: uIds } });
+      }
+    } catch (e) {}
     await mongoose.disconnect();
     console.log('Database connection closed.');
   }

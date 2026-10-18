@@ -167,6 +167,18 @@ const runStockRaceConditionTests = async () => {
     console.error('❌ TEST FAILED:', err.message || err);
     process.exit(1);
   } finally {
+    try {
+      await Category.deleteMany({ slug: 'race-test-category' });
+      await Product.deleteMany({ sku: { $in: ['RACE-TEST-PROD-1', 'RACE-TEST-PROD-MULTI', 'RACE-TEST-ROLLBACK-A', 'RACE-TEST-ROLLBACK-B'] } });
+      if (userA && userB && userC) {
+        await Order.deleteMany({ user: { $in: [userA._id, userB._id, userC._id] } });
+        await Address.deleteMany({ user: { $in: [userA._id, userB._id, userC._id] } });
+        await Cart.deleteMany({ user: { $in: [userA._id, userB._id, userC._id] } });
+        await User.deleteMany({ _id: { $in: [userA._id, userB._id, userC._id] } });
+      }
+    } catch (cleanErr) {
+      console.error('Cleanup error:', cleanErr);
+    }
     await mongoose.disconnect();
     console.log('Database connection closed.');
   }
